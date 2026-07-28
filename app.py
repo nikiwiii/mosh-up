@@ -509,7 +509,7 @@ class MoshUpApp(QMainWindow):
         self.btn_select_out = QPushButton(" SAVE AS...", self)
         self.btn_select_out.setIcon(get_lucide_icon("save", color="#ffffff", size=18))
         self.btn_select_out.clicked.connect(self.browse_output)
-        self.lbl_out_path = QLabel("AUTOMATIC UNIQUE FILENAME", self)
+        self.lbl_out_path = QLabel("AUTOMATIC FILENAME", self)
         self.lbl_out_path.setStyleSheet("font-size: 11px; font-weight: 700; color: #9ca3af;")
         out_file_layout.addWidget(self.btn_select_out)
         out_file_layout.addWidget(self.lbl_out_path, 1)
@@ -761,7 +761,7 @@ class MoshUpApp(QMainWindow):
 
         QMessageBox.information(
             self, "MOSHUP COMPLETE",
-            f"Datamoshing process finished successfully!\n\nUnique file saved at:\n{out_path}"
+            f"Datamoshing process finished successfully!\n\nNew file saved at:\n{out_path}"
         )
 
     def on_worker_error(self, err_msg):

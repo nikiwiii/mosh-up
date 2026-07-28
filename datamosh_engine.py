@@ -125,7 +125,7 @@ class DatamoshEngine:
         if proc.returncode != 0:
             raise RuntimeError(f"FFmpeg error during AVI conversion: {proc.stderr.decode('utf-8', errors='ignore')}")
 
-    def _recombine_with_original_audio(self, moshed_avi, original_input, final_output, progress_callback=None):
+    def _recombine_with_original_audio(self, moshed_avi, original_input, final_output, progress_callback=None, shortest=True):
         """Recombines moshed video with audio from original input video."""
         if progress_callback:
             progress_callback(90, "Finalizing and merging audio track...")
@@ -142,16 +142,19 @@ class DatamoshEngine:
             "-map", "1:a:0?",
             "-c:a", "aac",
             "-b:a", "192k",
-            "-shortest",
-            final_output
         ]
+        if shortest:
+            cmd.append("-shortest")
+
+        cmd.append(final_output)
         
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if proc.returncode != 0 or not os.path.exists(final_output):
             cmd_fallback = [
                 self.ffmpeg, "-y",
                 "-i", moshed_avi,
-                "-c:v", "copy",
+                "-c:v", "libx264",
+                "-pix_fmt", "yuv420p",
                 final_output
             ]
             subprocess.run(cmd_fallback, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -253,9 +256,10 @@ class DatamoshEngine:
 
             keep_audio = options.get('keep_audio', True)
             if keep_audio:
-                self._recombine_with_original_audio(temp_out_avi, input_path, output_path, progress_callback)
+                self._recombine_with_original_audio(temp_out_avi, input_path, output_path, progress_callback, shortest=True)
             else:
-                shutil.copyfile(temp_out_avi, output_path)
+                cmd_remux = [self.ffmpeg, "-y", "-i", temp_out_avi, "-c:v", "libx264", "-pix_fmt", "yuv420p", output_path]
+                subprocess.run(cmd_remux, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             if progress_callback:
                 progress_callback(100, "Done! Datamoshing completed successfully.")
@@ -341,9 +345,10 @@ class DatamoshEngine:
 
             keep_audio = options.get('keep_audio', True)
             if keep_audio:
-                self._recombine_with_original_audio(temp_out_avi, input_path, output_path, progress_callback)
+                self._recombine_with_original_audio(temp_out_avi, input_path, output_path, progress_callback, shortest=False)
             else:
-                shutil.copyfile(temp_out_avi, output_path)
+                cmd_remux = [self.ffmpeg, "-y", "-i", temp_out_avi, "-c:v", "libx264", "-pix_fmt", "yuv420p", output_path]
+                subprocess.run(cmd_remux, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             if progress_callback:
                 progress_callback(100, "Done! Motion Smear effect completed.")
@@ -360,8 +365,8 @@ class DatamoshEngine:
     def mosh_stitch(self, input_a, input_b, output_path, options, progress_callback=None):
         """
         Cross-video Datamosh Transition.
-        Stitches Video B onto Video A, stripping Video B's initial keyframe.
-        Automatically scales Video B to match Video A's resolution and framerate.
+        Stitches Video B onto Video A with keyframe replacement across Video B
+        for smooth, 1x realtime motion vector playback.
         """
         temp_dir = os.path.dirname(output_path) or "."
         temp_avi_a = os.path.join(temp_dir, "_temp_a.avi")
@@ -392,55 +397,113 @@ class DatamoshEngine:
             with open(temp_avi_b, 'rb') as f:
                 data_b = bytearray(f.read())
 
-            def get_frames(data):
-                f_list = []
-                pos = 0
-                while True:
-                    pos = data.find(b'00dc', pos)
-                    if pos == -1:
+            def parse_avi_chunks(data):
+                frames = []
+                movi_pos = data.find(b'LIST')
+                while movi_pos != -1:
+                    if movi_pos + 12 <= len(data) and data[movi_pos+8:movi_pos+12] == b'movi':
                         break
-                    if pos + 8 <= len(data):
-                        c_size = struct.unpack('<I', data[pos+4:pos+8])[0]
-                        f_list.append((pos, c_size))
-                        pos += 8 + c_size
-                    else:
-                        pos += 4
-                return f_list
+                    movi_pos = data.find(b'LIST', movi_pos + 4)
 
-            frames_a = get_frames(data_a)
-            frames_b = get_frames(data_b)
+                pos = movi_pos + 12 if movi_pos != -1 else 0
+                idx1_pos = data.find(b'idx1')
+
+                limit = idx1_pos if idx1_pos != -1 else len(data)
+
+                while pos < limit:
+                    chunk_id = data[pos:pos+4]
+                    if chunk_id in (b'00dc', b'01wb', b'00db'):
+                        if pos + 8 <= len(data):
+                            c_size = struct.unpack('<I', data[pos+4:pos+8])[0]
+                            frames.append((chunk_id, pos, c_size))
+                            pos += 8 + c_size + (c_size % 2)
+                        else:
+                            break
+                    else:
+                        pos += 1
+                return movi_pos, idx1_pos, frames
+
+            movi_pos_a, idx1_pos_a, frames_a = parse_avi_chunks(data_a)
+            movi_pos_b, idx1_pos_b, frames_b = parse_avi_chunks(data_b)
 
             if not frames_a or not frames_b:
                 raise RuntimeError("Failed to read video frames from clips A/B!")
 
             modified_data = bytearray()
-            last_a_end = frames_a[-1][0] + 8 + frames_a[-1][1]
-            modified_data.extend(data_a[:last_a_end])
+            movi_end_a = idx1_pos_a if idx1_pos_a != -1 else len(data_a)
+            modified_data.extend(data_a[:movi_end_a])
 
             if progress_callback:
-                progress_callback(65, "Concatenating streams and stripping Video B initial keyframe...")
+                progress_callback(65, "Synthesizing vector motion melt transition...")
 
-            for idx, (f_pos, f_size) in enumerate(frames_b):
-                chunk_data = data_b[f_pos:f_pos + 8 + f_size]
-                payload = data_b[f_pos + 8:f_pos + 8 + f_size]
-
-                if idx == 0:
+            # Find last P-frame payload of Video A to replace Video B's keyframes
+            last_pframe_payload_a = None
+            for c_id, f_pos, f_size in reversed(frames_a):
+                if c_id == b'00dc':
+                    payload = data_a[f_pos + 8:f_pos + 8 + f_size]
                     vop_idx = payload.find(b'\x00\x00\x01\xb6')
                     if vop_idx != -1 and vop_idx + 4 < len(payload):
                         vop_type = (payload[vop_idx + 4] & 0xC0) >> 6
-                        if vop_type == 0:  # I-frame
-                            continue
+                        if vop_type == 1:
+                            last_pframe_payload_a = payload
+                            break
 
-                modified_data.extend(chunk_data)
+            video_b_count = 0
+            last_pframe_payload_b = last_pframe_payload_a
+
+            for idx, (c_id, f_pos, f_size) in enumerate(frames_b):
+                chunk_bytes = bytearray(data_b[f_pos:f_pos + 8 + f_size + (f_size % 2)])
+                payload = data_b[f_pos + 8:f_pos + 8 + f_size]
+
+                if c_id == b'00dc':
+                    vop_idx = payload.find(b'\x00\x00\x01\xb6')
+                    is_iframe = False
+                    if vop_idx != -1 and vop_idx + 4 < len(payload):
+                        vop_type = (payload[vop_idx + 4] & 0xC0) >> 6
+                        if vop_type == 0:  # I-frame
+                            is_iframe = True
+
+                    # Replace ALL keyframes in Video B with delta payload so decoder never resets image
+                    if is_iframe:
+                        if last_pframe_payload_b is not None:
+                            new_chunk = bytearray(chunk_bytes[:8]) + last_pframe_payload_b
+                            if len(new_chunk) % 2 != 0:
+                                new_chunk.append(0)
+                            struct.pack_into('<I', new_chunk, 4, len(last_pframe_payload_b))
+                            chunk_bytes = new_chunk
+                        else:
+                            continue
+                    else:
+                        last_pframe_payload_b = payload
+
+                    # 1x realtime playback - smooth transition without artificial freezing
+                    modified_data.extend(chunk_bytes)
+                    video_b_count += 1
+
+            # Update avih dwTotalFrames
+            avih_pos = modified_data.find(b'avih')
+            if avih_pos != -1 and avih_pos + 24 <= len(modified_data):
+                total_video_frames = len([f for f in frames_a if f[0] == b'00dc']) + video_b_count
+                struct.pack_into('<I', modified_data, avih_pos + 20, total_video_frames)
+
+            # Update LIST movi size
+            if movi_pos_a != -1 and movi_pos_a + 8 <= len(modified_data):
+                new_movi_size = len(modified_data) - (movi_pos_a + 8)
+                struct.pack_into('<I', modified_data, movi_pos_a + 4, new_movi_size)
+
+            # Update RIFF header size
+            if len(modified_data) >= 8:
+                struct.pack_into('<I', modified_data, 4, len(modified_data) - 8)
 
             with open(temp_out_avi, 'wb') as f:
                 f.write(modified_data)
 
             keep_audio = options.get('keep_audio', True)
             if keep_audio:
-                self._recombine_with_original_audio(temp_out_avi, input_a, output_path, progress_callback)
+                self._recombine_with_original_audio(temp_out_avi, input_a, output_path, progress_callback, shortest=False)
             else:
-                shutil.copyfile(temp_out_avi, output_path)
+                cmd_remux = [self.ffmpeg, "-y", "-i", temp_out_avi, "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-pix_fmt", "yuv420p", output_path]
+                subprocess.run(cmd_remux, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             if progress_callback:
                 progress_callback(100, "Done! Stitch Mosh completed successfully.")
@@ -483,7 +546,6 @@ class DatamoshEngine:
                 if pos + 8 <= len(data):
                     c_size = struct.unpack('<I', data[pos+4:pos+8])[0]
                     frames.append((pos, c_size))
-                    pos += 8 + chunk_size if 'chunk_size' in locals() else c_size
                     pos += 8 + c_size
                 else:
                     pos += 4
@@ -526,9 +588,10 @@ class DatamoshEngine:
 
             keep_audio = options.get('keep_audio', True)
             if keep_audio:
-                self._recombine_with_original_audio(temp_out_avi, input_path, output_path, progress_callback)
+                self._recombine_with_original_audio(temp_out_avi, input_path, output_path, progress_callback, shortest=True)
             else:
-                shutil.copyfile(temp_out_avi, output_path)
+                cmd_remux = [self.ffmpeg, "-y", "-i", temp_out_avi, "-c:v", "libx264", "-pix_fmt", "yuv420p", output_path]
+                subprocess.run(cmd_remux, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             if progress_callback:
                 progress_callback(100, "Done! Cyber Glitch effect generated.")
@@ -613,9 +676,10 @@ class DatamoshEngine:
 
             keep_audio = options.get('keep_audio', True)
             if keep_audio:
-                self._recombine_with_original_audio(temp_video, input_path, output_path, progress_callback)
+                self._recombine_with_original_audio(temp_video, input_path, output_path, progress_callback, shortest=True)
             else:
-                shutil.copyfile(temp_video, output_path)
+                cmd_remux = [self.ffmpeg, "-y", "-i", temp_video, "-c:v", "libx264", "-pix_fmt", "yuv420p", output_path]
+                subprocess.run(cmd_remux, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             if progress_callback:
                 progress_callback(100, "Done! Optical Flow Drift effect completed.")
