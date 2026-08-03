@@ -1,33 +1,24 @@
-"""
-Electric Violet (#7c3aed / #8b5cf6) accent palette.
-"""
-
-BRUTALIST_DARK_QSS = """
-
+DARK_QSS = """
 * {
     font-family: 'Helvetica Neue', 'Helvetica', 'Segoe UI', 'Arial', sans-serif;
     font-size: 13px;
     color: #f3f4f6;
 }
 
-/* Main Window Background - Ultra Dark Slate */
 QMainWindow, QDialog {
     background-color: #0b0c10;
 }
 
-/* Central Widget */
 QWidget#centralWidget, QWidget#mainContainer {
     background-color: #0b0c10;
 }
 
-/* 1px Thin Bordered Panel Containers */
 QFrame.glassPanel, QWidget.glassPanel, QFrame.brutalistPanel {
     background-color: #14161d;
     border: 1px solid #2a2d3d;
     border-radius: 2px;
 }
 
-/* GroupBox - Sleek 1px Container */
 QGroupBox {
     font-weight: 800;
     font-size: 12px;
@@ -50,13 +41,12 @@ QGroupBox::title {
     left: 12px;
     padding: 2px 8px;
     color: #ffffff;
-    background-color: #7c3aed; /* Electric Violet Accent */
+    background-color: #7c3aed;
     border: 1px solid #8b5cf6;
     border-radius: 2px;
     font-weight: 800;
 }
 
-/* Typography */
 QLabel {
     color: #f3f4f6;
 }
@@ -77,7 +67,6 @@ QLabel.subLabel {
     letter-spacing: 0.5px;
 }
 
-/* Standard Buttons - 1px Border */
 QPushButton {
     color: #ffffff;
     font-weight: 800;
@@ -90,7 +79,7 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background-color: #7c3aed; /* Electric Violet */
+    background-color: #7c3aed;
     color: #ffffff;
     border: 1px solid #8b5cf6;
 }
@@ -106,7 +95,6 @@ QPushButton:disabled {
     background-color: #111827;
 }
 
-/* Primary Action Button - Electric Violet Accent */
 QPushButton.btnGreen {
     color: #ffffff;
     font-weight: 900;
@@ -114,11 +102,11 @@ QPushButton.btnGreen {
     letter-spacing: 1px;
     text-transform: uppercase;
     border: 1px solid #a855f7;
-    background-color: #7c3aed; /* Electric Violet */
+    background-color: #7c3aed;
 }
 
 QPushButton.btnGreen:hover {
-    background-color: #8b5cf6; /* Vibrant Violet */
+    background-color: #8b5cf6;
     border: 1px solid #c084fc;
 }
 
@@ -127,7 +115,6 @@ QPushButton.btnGreen:pressed {
     border: 1px solid #7c3aed;
 }
 
-/* Secondary Button - Dark Slate */
 QPushButton.btnSecondary {
     color: #e5e7eb;
     font-weight: 800;
@@ -141,7 +128,6 @@ QPushButton.btnSecondary:hover {
     border: 1px solid #4b5563;
 }
 
-/* Tab Widget - Sleek 1px Border Tabs */
 QTabWidget::pane {
     border: 1px solid #2a2d3d;
     background-color: #12141c;
@@ -175,7 +161,6 @@ QTabBar::tab:selected {
     font-weight: 900;
 }
 
-/* LineEdit & SpinBox - Sleek 1px Inputs */
 QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {
     background-color: #181b24;
     color: #ffffff;
@@ -209,7 +194,6 @@ QComboBox QAbstractItemView {
     border: 1px solid #374151;
 }
 
-/* Sliders - Sleek 1px Track */
 QSlider::groove:horizontal {
     height: 8px;
     background-color: #181b24;
@@ -237,7 +221,6 @@ QSlider::handle:horizontal:hover {
     border: 1px solid #ffffff;
 }
 
-/* Progress Bar - Violet Accent Chunk */
 QProgressBar {
     border: 1px solid #374151;
     background-color: #181b24;
@@ -252,7 +235,6 @@ QProgressBar::chunk {
     border-right: 1px solid #8b5cf6;
 }
 
-/* CheckBox & RadioButton */
 QCheckBox, QRadioButton {
     color: #f3f4f6;
     font-weight: 700;
@@ -272,7 +254,6 @@ QCheckBox::indicator:checked {
     border: 1px solid #8b5cf6;
 }
 
-/* TextEdit / Log Output */
 QTextEdit {
     background-color: #0e1017;
     color: #c084fc;
@@ -284,7 +265,6 @@ QTextEdit {
     padding: 6px;
 }
 
-/* ScrollBars - 1px Border Scrollbar */
 QScrollBar:vertical {
     background-color: #12141c;
     width: 14px;
@@ -306,7 +286,6 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     height: 0px;
 }
 
-/* ToolTips */
 QToolTip {
     background-color: #1f2937;
     color: #ffffff;

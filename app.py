@@ -1,9 +1,3 @@
-"""
-MoshUp - Video Datamoshing Studio
-Dark Swiss & Neo-Brutalist Interface with Sleek 1px Borders & Electric Violet Accent.
-All user messages and interface texts translated to English.
-"""
-
 import os
 import sys
 import time
@@ -19,13 +13,12 @@ from PySide6.QtWidgets import (
     QGroupBox, QFrame, QMessageBox, QSplitter, QLineEdit
 )
 
-from brutalist_style import BRUTALIST_DARK_QSS
+from style import DARK_QSS
 from datamosh_engine import DatamoshEngine, get_ffmpeg_exe, parse_timestamp, format_seconds_to_timestamp
 from lucide_icons import get_lucide_icon, get_lucide_pixmap
 
 
 def generate_random_filename(input_path, mode=""):
-    """Generates an output filename with random 4-digit ID to prevent overwriting."""
     if not input_path:
         rand_id = random.randint(1000, 9999)
         return f"moshup_output_{rand_id}.mp4"
@@ -39,7 +32,6 @@ def generate_random_filename(input_path, mode=""):
 
 
 class DatamoshWorker(QThread):
-    """Background worker thread to run datamoshing without freezing the GUI."""
     progress_signal = Signal(int, str)
     finished_signal = Signal(str)
     error_signal = Signal(str)
@@ -64,7 +56,6 @@ class DatamoshWorker(QThread):
 
 
 class DropAreaWidget(QFrame):
-    """Custom Drag & Drop video file drop area with sleek 1px styling."""
     file_dropped = Signal(str)
 
     def __init__(self, parent=None):
@@ -112,7 +103,6 @@ class DropAreaWidget(QFrame):
 
 
 class VideoPreviewWidget(QWidget):
-    """Custom Video Player Widget using OpenCV for lightweight playback."""
     position_changed = Signal(float)
 
     def __init__(self, parent=None):
@@ -244,7 +234,6 @@ class VideoPreviewWidget(QWidget):
 
 
 class MoshUpApp(QMainWindow):
-    """Main Application Window for MoshUp in Sleek Dark Swiss Style with Electric Violet Accent."""
 
     def __init__(self):
         super().__init__()
@@ -262,7 +251,7 @@ class MoshUpApp(QMainWindow):
         self.init_ui()
 
     def init_ui(self):
-        self.setStyleSheet(BRUTALIST_DARK_QSS)
+        self.setStyleSheet(DARK_QSS)
 
         central_widget = QWidget(self)
         central_widget.setObjectName("centralWidget")
@@ -339,7 +328,7 @@ class MoshUpApp(QMainWindow):
         preset_layout.addWidget(self.combo_presets, 1)
         right_layout.addWidget(preset_group)
 
-        # Datamosh Mode Tabs with Lucide Icons
+        # Datamosh Mode Tabs
         self.tabs = QTabWidget(self)
         self.tabs.setIconSize(QSize(18, 18))
 
@@ -619,7 +608,6 @@ class MoshUpApp(QMainWindow):
         self.validate_timestamps()
 
     def validate_timestamps(self):
-        """Validates timestamp inputs and updates visual feedback label."""
         if not hasattr(self, 'lbl_ts_validation'):
             return False
 

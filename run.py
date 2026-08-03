@@ -1,6 +1,3 @@
-"""
-Launcher script for VistaMosh Studio
-"""
 import sys
 from app import main
 

@@ -1,9 +1,3 @@
-"""
-Datamosh Engine - Core Video Glitch & Datamoshing Processing
-Supports MPEG-4 AVI keyframe manipulation, P-frame duplication, bit corruption,
-and Optical Flow vector drift.
-"""
-
 import os
 import sys
 import struct
@@ -16,7 +10,6 @@ import imageio_ffmpeg
 
 
 def get_ffmpeg_exe():
-    """Returns absolute path to executable FFmpeg binary."""
     try:
         return imageio_ffmpeg.get_ffmpeg_exe()
     except Exception:
@@ -24,10 +17,6 @@ def get_ffmpeg_exe():
 
 
 def parse_timestamp(ts_str):
-    """
-    Parses timestamp string format like MM:SS, MM:SS.s, HH:MM:SS, or seconds float.
-    Returns seconds as float or None if invalid.
-    """
     if not ts_str or not isinstance(ts_str, str):
         return None
 
@@ -71,7 +60,6 @@ class DatamoshEngine:
 
     def process(self, mode, input_path, output_path, options=None, progress_callback=None):
         """
-        Main entry point for video datamoshing.
         modes: 'volcano_melt', 'motion_smear', 'stitch_mosh', 'cyber_glitch', 'flow_drift'
         """
         options = options or {}
@@ -95,7 +83,6 @@ class DatamoshEngine:
             raise ValueError(f"Unknown datamosh mode: {mode}")
 
     def _convert_to_avi_mpeg4(self, input_path, temp_avi, progress_callback=None, target_res=None):
-        """Converts input video to MPEG4 AVI with iframe interval suitable for datamoshing."""
         if progress_callback:
             progress_callback(10, "Converting to raw MPEG-4 AVI container...")
         
@@ -126,7 +113,6 @@ class DatamoshEngine:
             raise RuntimeError(f"FFmpeg error during AVI conversion: {proc.stderr.decode('utf-8', errors='ignore')}")
 
     def _recombine_with_original_audio(self, moshed_avi, original_input, final_output, progress_callback=None, shortest=True):
-        """Recombines moshed video with audio from original input video."""
         if progress_callback:
             progress_callback(90, "Finalizing and merging audio track...")
 

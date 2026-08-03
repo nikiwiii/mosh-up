@@ -1,8 +1,3 @@
-"""
-Lucide Icons Module for PySide6 / Qt Applications
-Provides official Lucide vector SVG icons and converts them dynamically to QIcon and QPixmap.
-"""
-
 from PySide6.QtCore import QByteArray, QRectF, Qt
 from PySide6.QtGui import QIcon, QPixmap, QPainter
 from PySide6.QtSvg import QSvgRenderer
