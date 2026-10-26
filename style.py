@@ -160,12 +160,12 @@ QPushButton:disabled {
 QPushButton.btnGreen, QPushButton.btnPrimary, QPushButton#btnStart {
     color: #ffffff;
     font-weight: 700;
-    font-size: 14px;
-    letter-spacing: 0.3px;
-    border-radius: 13px;
+    font-size: 13px;
+    letter-spacing: 0.2px;
+    border-radius: 11px;
     border: 1px solid #151829;
     background-color: #151829;
-    padding: 10px 20px;
+    padding: 8px 18px;
 }
 
 QPushButton.btnGreen:hover, QPushButton.btnPrimary:hover, QPushButton#btnStart:hover {
@@ -189,20 +189,22 @@ QPushButton.btnGreen:disabled, QPushButton.btnPrimary:disabled, QPushButton#btnS
 QPushButton.btnSecondary {
     color: #334155;
     font-weight: 600;
-    border: 1px solid #d8e2ed;
-    background-color: #f4f8fb;
+    font-size: 12.5px;
+    border: 1px solid #cbd5e1;
+    background-color: #f8fafc;
     border-radius: 11px;
-    padding: 6px 13px;
+    padding: 7px 15px;
 }
 
 QPushButton.btnSecondary:hover {
-    background-color: #e8f0f8;
-    border: 1px solid #c6d4e4;
+    background-color: #f1f5f9;
+    border: 1px solid #94a3b8;
     color: #0f172a;
 }
 
 QPushButton.btnSecondary:pressed {
-    background-color: #dbe6f2;
+    background-color: #e2e8f0;
+    border: 1px solid #64748b;
 }
 
 /* Segmented Pill Tabs */
@@ -425,6 +427,85 @@ QSplitter::handle {
     background-color: transparent;
     width: 6px;
     height: 6px;
+}
+
+/* Stepper Navigation Bar */
+QFrame#stepperBar {
+    background-color: #ffffff;
+    border: 1px solid #dbe3ed;
+    border-radius: 16px;
+}
+
+QPushButton.stepperItem {
+    background-color: transparent;
+    border: none;
+    border-radius: 11px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-align: center;
+}
+
+QPushButton.stepperItem:hover {
+    background-color: #f1f5fa;
+    color: #1e293b;
+}
+
+QPushButton.stepperItemActive {
+    background-color: #151829;
+    border: none;
+    border-radius: 11px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+QPushButton.stepperItemActive:hover {
+    background-color: #242940;
+}
+
+QPushButton.stepperItemDone {
+    background-color: #f1f6fb;
+    border: 1px solid #d5e2f0;
+    border-radius: 11px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+QPushButton.stepperItemDone:hover {
+    background-color: #e4edf7;
+}
+
+/* Page Headers */
+QLabel.pageHeaderTitle {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    color: #0f172a;
+}
+
+QLabel.pageHeaderSubtitle {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #64748b;
+}
+
+/* Success Card Banner */
+QFrame.successBanner {
+    background-color: #ecfdf5;
+    border: 1.5px solid #a7f3d0;
+    border-radius: 14px;
+}
+
+/* Wizard Bottom Nav Bar */
+QFrame#wizardNavBar {
+    background-color: #ffffff;
+    border: 1px solid #dbe3ed;
+    border-radius: 16px;
 }
 """
 
