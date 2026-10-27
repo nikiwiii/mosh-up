@@ -21,9 +21,11 @@ from ui import (
     apply_card_shadow,
     generate_random_filename,
     DatamoshWorker,
+    FastDraftWorker,
     DropAreaWidget,
     VideoPreviewWidget,
     NavigationRail,
+    FastDraftDialog,
     UploadPage,
     EffectsPage,
     RenderPage,
@@ -150,6 +152,11 @@ class MoshUpApp(QMainWindow):
         self.btn_select_out.clicked.connect(self.browse_output)
         self.lbl_out_path = self.page_effects.lbl_out_path
 
+        self.fast_draft_widget = self.page_effects.fast_draft_widget
+        self.btn_fast_draft = self.page_effects.btn_fast_draft
+        self.fast_draft_player = self.page_effects.fast_draft_player
+        self.fast_draft_widget.draft_requested.connect(self.start_fast_draft)
+
         self.btn_step2_back = self.page_effects.btn_step2_back
         self.btn_step2_back.clicked.connect(lambda: self.go_to_step(0))
         self.btn_step2_next = self.page_effects.btn_step2_next
@@ -228,6 +235,8 @@ class MoshUpApp(QMainWindow):
         # Pause any playing videos before switching
         if hasattr(self, 'source_player'):
             self.source_player.pause()
+        if hasattr(self, 'fast_draft_widget'):
+            self.fast_draft_widget.pause()
         if hasattr(self, 'preview_player'):
             self.preview_player.pause()
 
@@ -544,6 +553,92 @@ class MoshUpApp(QMainWindow):
         self.log(f"Błąd: {err_msg}")
         QMessageBox.critical(self, "Błąd przetwarzania", f"Wystąpił błąd podczas procesu datamosh:\n\n{err_msg}")
 
+    # FAST DRAFT (3-second instant preview)
+    def start_fast_draft(self):
+        if not self.input_file_a or not os.path.exists(self.input_file_a):
+            QMessageBox.warning(self, "Brak pliku wideo", "Wybierz najpierw plik wideo w kroku 1!")
+            self.go_to_step(0)
+            return
+
+        mode_map = {
+            0: 'volcano_melt',
+            1: 'motion_smear',
+            2: 'stitch_mosh',
+            3: 'cyber_glitch',
+            4: 'flow_drift',
+            5: 'rgb_split'
+        }
+        tab_idx = self.tabs.currentIndex()
+        mode = mode_map.get(tab_idx, 'volcano_melt')
+
+        if mode == 'volcano_melt':
+            if not self.validate_timestamps():
+                QMessageBox.warning(self, "Błąd zakresu czasu", "Popraw przedział czasu w zakładce Volcano Melt przed podglądem!")
+                return
+
+        if mode == 'stitch_mosh':
+            if not self.input_file_b or not os.path.exists(self.input_file_b):
+                QMessageBox.warning(self, "Brak drugiego wideo", "Wybierz plik Wideo B dla trybu Stitch Mosh przed wygenerowaniem podglądu!")
+                return
+
+        if mode == 'volcano_melt':
+            start_sec = parse_timestamp(self.txt_ts_start.text()) or 0.0
+            t_start = max(0.0, min(max(0.0, self.video_duration - 3.0), start_sec))
+        else:
+            cursor_sec = self.source_player.get_current_seconds() if hasattr(self, 'source_player') and self.source_player.cap else 0.0
+            t_start = max(0.0, min(max(0.0, self.video_duration - 3.0), cursor_sec))
+
+        options = {
+            'keep_audio': self.chk_keep_audio.isChecked(),
+            'input_b': self.input_file_b,
+            'start_sec': 0.0,
+            'end_sec': 3.0,
+            'video_duration': 3.0,
+            'repeat_count': self.spin_s_repeat.value(),
+            'frequency': self.spin_s_freq.value(),
+            'corrupt_rate': self.slider_c_rate.value() / 100.0,
+            'intensity': self.slider_c_intensity.value() / 100.0,
+            'flow_scale': self.spin_fl_scale.value(),
+            'decay': self.spin_fl_decay.value(),
+            'rgb_delay': self.spin_rgb_delay.value(),
+            'rgb_shift': self.spin_rgb_shift.value(),
+            'rgb_direction': self.combo_rgb_direction.currentData() or 'horizontal',
+            'rgb_jitter': self.slider_rgb_jitter.value()
+        }
+
+        temp_dir = os.path.dirname(self.input_file_a) or "."
+        draft_output = os.path.join(temp_dir, f"_temp_fast_draft_{mode}.mp4")
+
+        if hasattr(self, 'fast_draft_widget'):
+            self.fast_draft_widget.show_loading()
+            self.fast_draft_widget.set_progress(0)
+
+        self.draft_worker = FastDraftWorker(
+            mode=mode,
+            input_path_a=self.input_file_a,
+            input_path_b=self.input_file_b,
+            output_draft_path=draft_output,
+            options=options,
+            t_start=t_start
+        )
+        self.draft_worker.progress_signal.connect(self.on_draft_progress)
+        self.draft_worker.finished_signal.connect(self.on_draft_finished)
+        self.draft_worker.error_signal.connect(self.on_draft_error)
+        self.draft_worker.start()
+
+    def on_draft_progress(self, pct, msg):
+        if hasattr(self, 'fast_draft_widget'):
+            self.fast_draft_widget.set_progress(pct)
+
+    def on_draft_finished(self, draft_path):
+        if hasattr(self, 'fast_draft_widget') and os.path.exists(draft_path):
+            self.fast_draft_widget.show_preview(draft_path)
+
+    def on_draft_error(self, err_msg):
+        if hasattr(self, 'fast_draft_widget'):
+            self.fast_draft_widget.show_button()
+        QMessageBox.critical(self, "Błąd szybkiego podglądu", f"Nie udało się wygenerować wycinka:\n\n{err_msg}")
+
     # PREVIEW SCREEN ACTIONS (Compare Source vs Result)
     def show_preview_result(self):
         self.btn_view_result.setProperty("class", "btnPrimary")
@@ -598,6 +693,8 @@ class MoshUpApp(QMainWindow):
         if reply == QMessageBox.StandardButton.Yes:
             if hasattr(self, 'source_player'):
                 self.source_player.pause()
+            if hasattr(self, 'fast_draft_widget'):
+                self.fast_draft_widget.reset()
             if hasattr(self, 'preview_player'):
                 self.preview_player.pause()
 
