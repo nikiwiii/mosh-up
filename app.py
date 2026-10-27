@@ -140,6 +140,11 @@ class MoshUpApp(QMainWindow):
         self.spin_fl_scale = self.page_effects.spin_fl_scale
         self.spin_fl_decay = self.page_effects.spin_fl_decay
 
+        self.spin_rgb_delay = self.page_effects.spin_rgb_delay
+        self.spin_rgb_shift = self.page_effects.spin_rgb_shift
+        self.combo_rgb_direction = self.page_effects.combo_rgb_direction
+        self.slider_rgb_jitter = self.page_effects.slider_rgb_jitter
+
         self.chk_keep_audio = self.page_effects.chk_keep_audio
         self.btn_select_out = self.page_effects.btn_select_out
         self.btn_select_out.clicked.connect(self.browse_output)
@@ -272,10 +277,15 @@ class MoshUpApp(QMainWindow):
             self.lbl_sum_mode_name.setText("Cyber Glitch (Cyfrowa korupcja bitów)")
             self.lbl_sum_param1.setText(f"Wskaźnik uszkodzeń: {self.slider_c_rate.value()}% klatek P")
             self.lbl_sum_param2.setText(f"Intensywność zamiany bajtów: poziom {self.slider_c_intensity.value()}")
-        else:
+        elif tab_idx == 4:
             self.lbl_sum_mode_name.setText("Flow Drift (Przepływ optyczny Farneback)")
             self.lbl_sum_param1.setText(f"Skala przepływu: {self.spin_fl_scale.value():.1f} • Wygaszanie śladu: {self.spin_fl_decay.value():.2f}")
             self.lbl_sum_param2.setText("Dynamiczna deformacja pola wektorów na ekranie")
+        else:
+            self.lbl_sum_mode_name.setText("RGB Channel Split (Aberracja chromatyczna)")
+            dir_text = self.combo_rgb_direction.currentText()
+            self.lbl_sum_param1.setText(f"Lag: {self.spin_rgb_delay.value()} kl. • Shift: {self.spin_rgb_shift.value()} px ({dir_text})")
+            self.lbl_sum_param2.setText(f"Zakłócenia linii VHS: {self.slider_rgb_jitter.value()}% szansy na klatkę")
 
         # 3. Audio Tile
         if self.chk_keep_audio.isChecked():
@@ -284,7 +294,7 @@ class MoshUpApp(QMainWindow):
             self.lbl_sum_audio_status.setText("Ścieżka audio: Wyciszona (Brak audio)")
 
         # 4. Output File Tile
-        mode_keys = ['volcano_melt', 'motion_smear', 'stitch_mosh', 'cyber_glitch', 'flow_drift']
+        mode_keys = ['volcano_melt', 'motion_smear', 'stitch_mosh', 'cyber_glitch', 'flow_drift', 'rgb_split']
         if not self.output_file:
             self.output_file = generate_random_filename(self.input_file_a, mode_keys[tab_idx])
 
@@ -310,6 +320,7 @@ class MoshUpApp(QMainWindow):
             "<li><b>Stitch Mosh</b>: Przenoszenie ruchu z drugiego klipu (Video B) na klatkę z Video A</li>"
             "<li><b>Cyber Glitch</b>: Bezpośrednie uszkadzanie bitów wektorów ruchu</li>"
             "<li><b>Flow Drift</b>: Organiczny dryf pikseli obliczany metodą przepływu optycznego</li>"
+            "<li><b>RGB Channel Split</b>: Rozszczepianie kanałów barwnych (Red, Green, Blue) z opóźnieniem czasowym i przesunięciem przestrzennym</li>"
             "</ul>"
         )
 
@@ -445,7 +456,8 @@ class MoshUpApp(QMainWindow):
             1: 'motion_smear',
             2: 'stitch_mosh',
             3: 'cyber_glitch',
-            4: 'flow_drift'
+            4: 'flow_drift',
+            5: 'rgb_split'
         }
         tab_idx = self.tabs.currentIndex()
         mode = mode_map.get(tab_idx, 'volcano_melt')
@@ -479,7 +491,11 @@ class MoshUpApp(QMainWindow):
             'corrupt_rate': self.slider_c_rate.value() / 100.0,
             'intensity': self.slider_c_intensity.value() / 100.0,
             'flow_scale': self.spin_fl_scale.value(),
-            'decay': self.spin_fl_decay.value()
+            'decay': self.spin_fl_decay.value(),
+            'rgb_delay': self.spin_rgb_delay.value(),
+            'rgb_shift': self.spin_rgb_shift.value(),
+            'rgb_direction': self.combo_rgb_direction.currentData() or 'horizontal',
+            'rgb_jitter': self.slider_rgb_jitter.value()
         }
 
         self.btn_start.setEnabled(False)

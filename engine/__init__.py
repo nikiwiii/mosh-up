@@ -21,6 +21,7 @@ from .avi import (
     VOP_TYPE_B,
     VOP_TYPE_S,
 )
+from .effects import mosh_rgb_split
 
 __all__ = [
     'DatamoshEngine',
@@ -40,4 +41,5 @@ __all__ = [
     'VOP_TYPE_P',
     'VOP_TYPE_B',
     'VOP_TYPE_S',
+    'mosh_rgb_split',
 ]

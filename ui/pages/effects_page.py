@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame, QTabWidget, QGroupBox, QLineEdit, QSpinBox,
-    QDoubleSpinBox, QSlider, QCheckBox
+    QDoubleSpinBox, QSlider, QCheckBox, QComboBox
 )
 from lucide_icons import get_lucide_icon
 from ..utils import apply_card_shadow
@@ -277,6 +277,70 @@ class EffectsPage(QWidget):
 
         tab_fl_layout.addWidget(fl_box)
         self.tabs.addTab(tab_flow, get_lucide_icon("waves", color="#475569"), "Flow Drift")
+
+        # --- Tab 6: RGB Split ---
+        tab_rgb = QWidget()
+        tab_rgb_layout = QVBoxLayout(tab_rgb)
+        tab_rgb_layout.setContentsMargins(12, 12, 12, 10)
+        tab_rgb_layout.setSpacing(8)
+
+        lbl_rgb_desc = QLabel(
+            "Rozszczepia składowe barwne (czerwony, zielony, niebieski) z opóźnieniem czasowym i przesunięciem "
+            "przestrzennym, tworząc hipnotyzujące tęczowe smugi ruchu oraz analogowy efekt aberracji chromatycznej VHS.", tab_rgb
+        )
+        lbl_rgb_desc.setWordWrap(True)
+        lbl_rgb_desc.setStyleSheet("color: #64748b; font-size: 12.5px; font-weight: 500; margin-bottom: 4px;")
+        tab_rgb_layout.addWidget(lbl_rgb_desc)
+
+        rgb_box = QGroupBox("Parametry rozszczepienia kanałów RGB", tab_rgb)
+        rgb_box_layout = QVBoxLayout(rgb_box)
+        rgb_box_layout.setContentsMargins(14, 14, 14, 12)
+        rgb_box_layout.setSpacing(8)
+
+        rgb_delay_row = QHBoxLayout()
+        rgb_delay_lbl = QLabel("Opóźnienie klatek (Lag czasowy):", tab_rgb)
+        rgb_delay_lbl.setStyleSheet("font-weight: 600; color: #475569;")
+        rgb_delay_lbl.setFixedWidth(220)
+        self.spin_rgb_delay = QSpinBox(tab_rgb)
+        self.spin_rgb_delay.setRange(0, 20)
+        self.spin_rgb_delay.setValue(4)
+        rgb_delay_row.addWidget(rgb_delay_lbl)
+        rgb_delay_row.addWidget(self.spin_rgb_delay, 1)
+        rgb_box_layout.addLayout(rgb_delay_row)
+
+        rgb_shift_row = QHBoxLayout()
+        rgb_shift_lbl = QLabel("Przesunięcie optyczne (px):", tab_rgb)
+        rgb_shift_lbl.setStyleSheet("font-weight: 600; color: #475569;")
+        rgb_shift_lbl.setFixedWidth(220)
+        self.spin_rgb_shift = QSpinBox(tab_rgb)
+        self.spin_rgb_shift.setRange(0, 40)
+        self.spin_rgb_shift.setValue(8)
+        rgb_shift_row.addWidget(rgb_shift_lbl)
+        rgb_shift_row.addWidget(self.spin_rgb_shift, 1)
+        rgb_box_layout.addLayout(rgb_shift_row)
+
+        rgb_dir_row = QHBoxLayout()
+        rgb_dir_lbl = QLabel("Kierunek przesunięcia:", tab_rgb)
+        rgb_dir_lbl.setStyleSheet("font-weight: 600; color: #475569;")
+        rgb_dir_lbl.setFixedWidth(220)
+        self.combo_rgb_direction = QComboBox(tab_rgb)
+        self.combo_rgb_direction.addItem("Poziomy (Horizontal)", "horizontal")
+        self.combo_rgb_direction.addItem("Ukośny (Diagonal)", "diagonal")
+        self.combo_rgb_direction.addItem("Pionowy (Vertical)", "vertical")
+        rgb_dir_row.addWidget(rgb_dir_lbl)
+        rgb_dir_row.addWidget(self.combo_rgb_direction, 1)
+        rgb_box_layout.addLayout(rgb_dir_row)
+
+        rgb_jitter_lbl = QLabel("Zakłócenia linii VHS (Jitter %):", tab_rgb)
+        rgb_jitter_lbl.setStyleSheet("font-weight: 600; color: #475569;")
+        rgb_box_layout.addWidget(rgb_jitter_lbl)
+        self.slider_rgb_jitter = QSlider(Qt.Orientation.Horizontal, tab_rgb)
+        self.slider_rgb_jitter.setRange(0, 50)
+        self.slider_rgb_jitter.setValue(10)
+        rgb_box_layout.addWidget(self.slider_rgb_jitter)
+
+        tab_rgb_layout.addWidget(rgb_box)
+        self.tabs.addTab(tab_rgb, get_lucide_icon("split", color="#475569"), "RGB Split")
 
         tabs_card_layout.addWidget(self.tabs, 1)
         apply_card_shadow(tabs_card)

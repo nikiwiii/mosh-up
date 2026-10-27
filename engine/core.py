@@ -8,6 +8,7 @@ from .effects import (
     mosh_stitch,
     mosh_cyber_glitch,
     mosh_flow_drift,
+    mosh_rgb_split,
 )
 
 
@@ -22,7 +23,7 @@ class DatamoshEngine:
     def process(self, mode, input_path, output_path, options=None, progress_callback=None):
         """
         Processes video using specified datamosh mode.
-        Supported modes: 'volcano_melt', 'motion_smear', 'stitch_mosh', 'cyber_glitch', 'flow_drift'
+        Supported modes: 'volcano_melt', 'motion_smear', 'stitch_mosh', 'cyber_glitch', 'flow_drift', 'rgb_split'
         """
         options = options or {}
         if progress_callback:
@@ -41,6 +42,8 @@ class DatamoshEngine:
             return self.mosh_cyber_glitch(input_path, output_path, options, progress_callback)
         elif mode == 'flow_drift':
             return self.mosh_flow_drift(input_path, output_path, options, progress_callback)
+        elif mode == 'rgb_split':
+            return self.mosh_rgb_split(input_path, output_path, options, progress_callback)
         else:
             raise ValueError(f"Unknown datamosh mode: {mode}")
 
@@ -64,3 +67,7 @@ class DatamoshEngine:
 
     def mosh_flow_drift(self, input_path, output_path, options, progress_callback=None):
         return mosh_flow_drift(self.ffmpeg, input_path, output_path, options, progress_callback)
+
+    def mosh_rgb_split(self, input_path, output_path, options, progress_callback=None):
+        return mosh_rgb_split(self.ffmpeg, input_path, output_path, options, progress_callback)
+
