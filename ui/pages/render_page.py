@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 )
 from lucide_icons import get_lucide_icon, get_lucide_pixmap
 from ..utils import apply_card_shadow
+from i18n import tr
 
 
 class RenderPage(QWidget):
@@ -26,13 +27,13 @@ class RenderPage(QWidget):
         h_layout.setContentsMargins(18, 12, 18, 12)
         h_layout.setSpacing(4)
 
-        lbl_h_title = QLabel("Krok 3: Eksport i Renderowanie", header_card)
-        lbl_h_title.setProperty("class", "pageHeaderTitle")
-        lbl_h_sub = QLabel("Szczegółowe zestawienie parametrów renderowania oraz uruchomienie silnika Datamosh.", header_card)
-        lbl_h_sub.setProperty("class", "pageHeaderSubtitle")
+        self.lbl_h_title = QLabel(tr("step3_title"), header_card)
+        self.lbl_h_title.setProperty("class", "pageHeaderTitle")
+        self.lbl_h_sub = QLabel(tr("step3_subtitle"), header_card)
+        self.lbl_h_sub.setProperty("class", "pageHeaderSubtitle")
 
-        h_layout.addWidget(lbl_h_title)
-        h_layout.addWidget(lbl_h_sub)
+        h_layout.addWidget(self.lbl_h_title)
+        h_layout.addWidget(self.lbl_h_sub)
         apply_card_shadow(header_card)
         layout.addWidget(header_card)
 
@@ -44,9 +45,9 @@ class RenderPage(QWidget):
         sum_layout.setSpacing(12)
 
         sum_hdr = QHBoxLayout()
-        lbl_sum_hdr = QLabel("Podsumowanie zadania renderingu", self.summary_card)
-        lbl_sum_hdr.setProperty("class", "sectionTitle")
-        sum_hdr.addWidget(lbl_sum_hdr)
+        self.lbl_sum_hdr = QLabel(tr("summary_hdr"), self.summary_card)
+        self.lbl_sum_hdr.setProperty("class", "sectionTitle")
+        sum_hdr.addWidget(self.lbl_sum_hdr)
         sum_hdr.addStretch()
         sum_layout.addLayout(sum_hdr)
 
@@ -67,19 +68,19 @@ class RenderPage(QWidget):
         th_src = QHBoxLayout()
         icon_src = QLabel(tile_src)
         icon_src.setPixmap(get_lucide_pixmap("file-video", color="#475569", size=18))
-        lbl_src_title = QLabel("1. WIDEO ŹRÓDŁOWE", tile_src)
-        lbl_src_title.setStyleSheet("font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.3px;")
+        self.lbl_src_title = QLabel(tr("tile1_title"), tile_src)
+        self.lbl_src_title.setStyleSheet("font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.3px;")
         th_src.addWidget(icon_src)
-        th_src.addWidget(lbl_src_title)
+        th_src.addWidget(self.lbl_src_title)
         th_src.addStretch()
         ts_layout.addLayout(th_src)
 
-        self.lbl_sum_src_name = QLabel("Nie wybrano pliku", tile_src)
+        self.lbl_sum_src_name = QLabel("-", tile_src)
         self.lbl_sum_src_name.setStyleSheet("font-size: 13.5px; font-weight: 700; color: #0f172a;")
         self.lbl_sum_src_name.setWordWrap(True)
-        self.lbl_sum_src_meta1 = QLabel("Rozdzielczość: - • Klatkaż: -", tile_src)
+        self.lbl_sum_src_meta1 = QLabel("-", tile_src)
         self.lbl_sum_src_meta1.setStyleSheet("font-size: 11.5px; font-weight: 500; color: #475569;")
-        self.lbl_sum_src_meta2 = QLabel("Czas trwania: - • Rozmiar: -", tile_src)
+        self.lbl_sum_src_meta2 = QLabel("-", tile_src)
         self.lbl_sum_src_meta2.setStyleSheet("font-size: 11.5px; font-weight: 500; color: #475569;")
 
         ts_layout.addWidget(self.lbl_sum_src_name)
@@ -97,18 +98,18 @@ class RenderPage(QWidget):
         th_mode = QHBoxLayout()
         icon_mode = QLabel(tile_mode)
         icon_mode.setPixmap(get_lucide_pixmap("sliders", color="#475569", size=18))
-        lbl_mode_title = QLabel("2. PARAMETRY EFEKTU", tile_mode)
-        lbl_mode_title.setStyleSheet("font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.3px;")
+        self.lbl_mode_title = QLabel(tr("tile2_title"), tile_mode)
+        self.lbl_mode_title.setStyleSheet("font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.3px;")
         th_mode.addWidget(icon_mode)
-        th_mode.addWidget(lbl_mode_title)
+        th_mode.addWidget(self.lbl_mode_title)
         th_mode.addStretch()
         tm_layout.addLayout(th_mode)
 
         self.lbl_sum_mode_name = QLabel("Volcano Melt", tile_mode)
         self.lbl_sum_mode_name.setStyleSheet("font-size: 13.5px; font-weight: 700; color: #0f172a;")
-        self.lbl_sum_param1 = QLabel("Zakres: 00:00 - 00:30", tile_mode)
+        self.lbl_sum_param1 = QLabel("-", tile_mode)
         self.lbl_sum_param1.setStyleSheet("font-size: 11.5px; font-weight: 500; color: #475569;")
-        self.lbl_sum_param2 = QLabel("Usuwa klatki I-Frame z zachowaniem wektorów ruchu", tile_mode)
+        self.lbl_sum_param2 = QLabel("-", tile_mode)
         self.lbl_sum_param2.setStyleSheet("font-size: 11.5px; font-weight: 500; color: #475569;")
 
         tm_layout.addWidget(self.lbl_sum_mode_name)
@@ -131,14 +132,14 @@ class RenderPage(QWidget):
         th_audio = QHBoxLayout()
         icon_audio = QLabel(tile_audio)
         icon_audio.setPixmap(get_lucide_pixmap("music", color="#475569", size=18))
-        lbl_audio_title = QLabel("3. ŚCIEŻKA AUDIO", tile_audio)
-        lbl_audio_title.setStyleSheet("font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.3px;")
+        self.lbl_audio_title = QLabel(tr("tile3_title"), tile_audio)
+        self.lbl_audio_title.setStyleSheet("font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.3px;")
         th_audio.addWidget(icon_audio)
-        th_audio.addWidget(lbl_audio_title)
+        th_audio.addWidget(self.lbl_audio_title)
         th_audio.addStretch()
         ta_layout.addLayout(th_audio)
 
-        self.lbl_sum_audio_status = QLabel("Ścieżka audio: Zachowana (Oryginał)", tile_audio)
+        self.lbl_sum_audio_status = QLabel(tr("tile_audio_on"), tile_audio)
         self.lbl_sum_audio_status.setStyleSheet("font-size: 13.5px; font-weight: 700; color: #0f172a;")
 
         ta_layout.addWidget(self.lbl_sum_audio_status)
@@ -155,17 +156,17 @@ class RenderPage(QWidget):
         th_out = QHBoxLayout()
         icon_out = QLabel(tile_out)
         icon_out.setPixmap(get_lucide_pixmap("save", color="#475569", size=18))
-        lbl_out_title = QLabel("4. PLIK WYJŚCIOWY", tile_out)
-        lbl_out_title.setStyleSheet("font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.3px;")
+        self.lbl_out_title = QLabel(tr("tile4_title"), tile_out)
+        self.lbl_out_title.setStyleSheet("font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.3px;")
         th_out.addWidget(icon_out)
-        th_out.addWidget(lbl_out_title)
+        th_out.addWidget(self.lbl_out_title)
         th_out.addStretch()
         to_layout.addLayout(th_out)
 
         self.lbl_sum_output_file = QLabel("moshup_output.mp4", tile_out)
         self.lbl_sum_output_file.setStyleSheet("font-size: 13.5px; font-weight: 700; color: #0f172a;")
         self.lbl_sum_output_file.setWordWrap(True)
-        self.lbl_sum_output_dir = QLabel("Katalog: -", tile_out)
+        self.lbl_sum_output_dir = QLabel(tr("tile_dir_label", folder="-"), tile_out)
         self.lbl_sum_output_dir.setStyleSheet("font-size: 11.5px; font-weight: 500; color: #475569;")
         self.lbl_sum_output_dir.setWordWrap(True)
 
@@ -188,7 +189,7 @@ class RenderPage(QWidget):
         ac_layout.setSpacing(10)
 
         # Big Start Button
-        self.btn_start = QPushButton("  ROZPOCZNIJ MOSHING", action_card)
+        self.btn_start = QPushButton(tr("btn_start_mosh"), action_card)
         self.btn_start.setObjectName("btnStart")
         self.btn_start.setProperty("class", "btnPrimary")
         self.btn_start.setIcon(get_lucide_icon("rocket", color="#ffffff", size=20))
@@ -201,7 +202,7 @@ class RenderPage(QWidget):
         progress_row = QHBoxLayout()
         progress_row.setSpacing(12)
 
-        self.lbl_status = QLabel("Status: Gotowy do uruchomienia", action_card)
+        self.lbl_status = QLabel(tr("status_ready"), action_card)
         self.lbl_status.setStyleSheet("font-weight: 700; color: #1e293b; font-size: 12.5px;")
 
         self.progress_bar = QProgressBar(action_card)
@@ -225,17 +226,17 @@ class RenderPage(QWidget):
         log_hdr = QHBoxLayout()
         icon_log = QLabel(log_card)
         icon_log.setPixmap(get_lucide_pixmap("terminal", color="#64748b", size=15))
-        lbl_log_title = QLabel("Konsola", log_card)
-        lbl_log_title.setStyleSheet("font-size: 11.5px; font-weight: 700; color: #64748b;")
+        self.lbl_log_title = QLabel(tr("console_title"), log_card)
+        self.lbl_log_title.setStyleSheet("font-size: 11.5px; font-weight: 700; color: #64748b;")
         log_hdr.addWidget(icon_log)
-        log_hdr.addWidget(lbl_log_title)
+        log_hdr.addWidget(self.lbl_log_title)
         log_hdr.addStretch()
         lc_layout.addLayout(log_hdr)
 
         self.log_console = QTextEdit(log_card)
         self.log_console.setReadOnly(True)
         self.log_console.setFixedHeight(75)
-        self.log_console.setPlaceholderText("Strumień logów z silnika FFmpeg...")
+        self.log_console.setPlaceholderText(tr("console_placeholder"))
         lc_layout.addWidget(self.log_console)
 
         apply_card_shadow(log_card)
@@ -247,7 +248,7 @@ class RenderPage(QWidget):
         nc_layout = QHBoxLayout(nav_card)
         nc_layout.setContentsMargins(14, 8, 14, 8)
 
-        self.btn_step3_back = QPushButton("  Wróć do parametrów", nav_card)
+        self.btn_step3_back = QPushButton(tr("btn_step3_back"), nav_card)
         self.btn_step3_back.setProperty("class", "btnSecondary")
         self.btn_step3_back.setIcon(get_lucide_icon("arrow-left", color="#334155", size=15))
         self.btn_step3_back.setFixedHeight(38)
@@ -255,7 +256,7 @@ class RenderPage(QWidget):
 
         nc_layout.addStretch()
 
-        self.btn_step3_next = QPushButton("  Dalej: Podgląd gotowego wideo", nav_card)
+        self.btn_step3_next = QPushButton(tr("btn_step3_next"), nav_card)
         self.btn_step3_next.setProperty("class", "btnPrimary")
         self.btn_step3_next.setIcon(get_lucide_icon("arrow-right", color="#ffffff", size=15))
         self.btn_step3_next.setFixedHeight(38)
@@ -264,3 +265,18 @@ class RenderPage(QWidget):
 
         apply_card_shadow(nav_card, blur=10, offset_y=2, alpha=20)
         layout.addWidget(nav_card)
+
+    def retranslate_ui(self):
+        """Retranslates all text on Step 3."""
+        self.lbl_h_title.setText(tr("step3_title"))
+        self.lbl_h_sub.setText(tr("step3_subtitle"))
+        self.lbl_sum_hdr.setText(tr("summary_hdr"))
+        self.lbl_src_title.setText(tr("tile1_title"))
+        self.lbl_mode_title.setText(tr("tile2_title"))
+        self.lbl_audio_title.setText(tr("tile3_title"))
+        self.lbl_out_title.setText(tr("tile4_title"))
+        self.btn_start.setText(tr("btn_start_mosh"))
+        self.lbl_log_title.setText(tr("console_title"))
+        self.log_console.setPlaceholderText(tr("console_placeholder"))
+        self.btn_step3_back.setText(tr("btn_step3_back"))
+        self.btn_step3_next.setText(tr("btn_step3_next"))

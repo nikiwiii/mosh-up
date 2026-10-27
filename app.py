@@ -18,6 +18,7 @@ from datamosh_engine import (
     format_seconds_to_timestamp,
 )
 from lucide_icons import get_lucide_icon
+from i18n import tr, get_language, set_language
 from ui import (
     apply_card_shadow,
     generate_random_filename,
@@ -79,6 +80,7 @@ class MoshUpApp(QMainWindow):
         # 1. Left Navigation Rail
         self.sidebar_rail = NavigationRail(self)
         self.sidebar_rail.step_selected.connect(self.go_to_step)
+        self.sidebar_rail.language_toggle_requested.connect(self.toggle_language)
         self.sidebar_rail.reset_requested.connect(self.confirm_and_reset_app)
         self.sidebar_rail.info_requested.connect(self.show_about_dialog)
         root_layout.addWidget(self.sidebar_rail)
@@ -220,6 +222,34 @@ class MoshUpApp(QMainWindow):
 
         self.update_stepper_and_rail()
 
+    def toggle_language(self):
+        """Toggles between English ('en') and Polish ('pl') and refreshes UI texts."""
+        new_lang = 'pl' if get_language() == 'en' else 'en'
+        set_language(new_lang)
+        self.retranslate_ui()
+        self.log(f"Language changed to: {new_lang.upper()}")
+
+    def retranslate_ui(self):
+        """Translates all application components dynamically in-place."""
+        self.setWindowTitle(tr("app_title"))
+        self.sidebar_rail.retranslate_ui()
+        self.page_upload.retranslate_ui()
+        self.page_effects.retranslate_ui()
+        self.page_render.retranslate_ui()
+        self.page_preview.retranslate_ui()
+
+        # Update dynamic step 1 hint
+        if self.input_file_a:
+            self.lbl_step1_hint.setText(f"{tr('badge_loaded_success')}: {os.path.basename(self.input_file_a)}")
+        else:
+            self.lbl_step1_hint.setText(tr("step1_hint_empty"))
+
+        # Update validation status if in volcano melt
+        self.validate_timestamps()
+
+        # Refresh summary card if on step 3 or initialized
+        self.update_summary_card()
+
     # STEPPER & WORKFLOW NAVIGATION
     def go_to_step(self, step_idx):
         if step_idx == self.current_step:
@@ -227,11 +257,11 @@ class MoshUpApp(QMainWindow):
 
         # Validation checks
         if step_idx in [1, 2] and not self.input_file_a:
-            QMessageBox.warning(self, "Brak wideo", "Wczytaj najpierw plik wideo w kroku 1!")
+            QMessageBox.warning(self, tr("dialog_no_video_title"), tr("dialog_no_video_msg"))
             return
 
         if step_idx == 3 and (not self.output_file or not os.path.exists(self.output_file)):
-            QMessageBox.warning(self, "Brak wygenerowanego pliku", "Najpierw wyrenderuj wideo w kroku 3, aby zobaczyć podgląd!")
+            QMessageBox.warning(self, tr("dialog_no_output_title"), tr("dialog_no_output_msg"))
             return
 
         # Pause any playing videos before switching
@@ -262,47 +292,75 @@ class MoshUpApp(QMainWindow):
             base = os.path.basename(self.input_file_a)
             dur_str = format_seconds_to_timestamp(self.video_duration)
             self.lbl_sum_src_name.setText(base)
-            self.lbl_sum_src_meta1.setText(f"Rozdzielczość: {self.video_width} × {self.video_height} px • Klatkaż: {self.video_fps:.2f} fps")
-            self.lbl_sum_src_meta2.setText(f"Czas trwania: {dur_str} ({self.video_duration:.1f} s) • Rozmiar: {self.video_size_mb:.2f} MB")
+            if get_language() == 'pl':
+                self.lbl_sum_src_meta1.setText(f"Rozdzielczość: {self.video_width} × {self.video_height} px • Klatkaż: {self.video_fps:.2f} fps")
+                self.lbl_sum_src_meta2.setText(f"Czas trwania: {dur_str} ({self.video_duration:.1f} s) • Rozmiar: {self.video_size_mb:.2f} MB")
+            else:
+                self.lbl_sum_src_meta1.setText(f"Resolution: {self.video_width} × {self.video_height} px • FPS: {self.video_fps:.2f}")
+                self.lbl_sum_src_meta2.setText(f"Duration: {dur_str} ({self.video_duration:.1f} s) • Size: {self.video_size_mb:.2f} MB")
         else:
-            self.lbl_sum_src_name.setText("Brak wybranego pliku")
-            self.lbl_sum_src_meta1.setText("Rozdzielczość: - • Klatkaż: -")
-            self.lbl_sum_src_meta2.setText("Czas trwania: - • Rozmiar: -")
+            self.lbl_sum_src_name.setText("-" if get_language() == 'en' else "Brak wybranego pliku")
+            self.lbl_sum_src_meta1.setText("-" if get_language() == 'en' else "Rozdzielczość: - • Klatkaż: -")
+            self.lbl_sum_src_meta2.setText("-" if get_language() == 'en' else "Czas trwania: - • Rozmiar: -")
 
         # 2. Chosen Mode Tile
         tab_idx = self.tabs.currentIndex()
         if tab_idx == 0:
-            self.lbl_sum_mode_name.setText("Volcano Melt (Usuwanie klatek kluczowych)")
-            self.lbl_sum_param1.setText(f"Przedział czasowy: {self.txt_ts_start.text()} - {self.txt_ts_end.text()}")
-            self.lbl_sum_param2.setText("Usuwa klatki I-Frame w wybranym oknie czasowym")
+            self.lbl_sum_mode_name.setText("Volcano Melt" if get_language() == 'en' else "Volcano Melt (Usuwanie klatek kluczowych)")
+            if get_language() == 'pl':
+                self.lbl_sum_param1.setText(f"Przedział czasowy: {self.txt_ts_start.text()} - {self.txt_ts_end.text()}")
+                self.lbl_sum_param2.setText("Usuwa klatki I-Frame w wybranym oknie czasowym")
+            else:
+                self.lbl_sum_param1.setText(f"Time Range: {self.txt_ts_start.text()} - {self.txt_ts_end.text()}")
+                self.lbl_sum_param2.setText("Deletes keyframes (I-Frames) in the selected time window")
         elif tab_idx == 1:
-            self.lbl_sum_mode_name.setText("Motion Smear (Rozmazywanie wektorów)")
-            self.lbl_sum_param1.setText(f"Powtórzenia: {self.spin_s_repeat.value()}x • Częstotliwość: co {self.spin_s_freq.value()} klatki")
-            self.lbl_sum_param2.setText("Wielokrotna replikacja klatek delta (P-Frames)")
+            self.lbl_sum_mode_name.setText("Motion Smear" if get_language() == 'en' else "Motion Smear (Rozmazywanie wektorów)")
+            if get_language() == 'pl':
+                self.lbl_sum_param1.setText(f"Powtórzenia: {self.spin_s_repeat.value()}x • Częstotliwość: co {self.spin_s_freq.value()} klatki")
+                self.lbl_sum_param2.setText("Wielokrotna replikacja klatek delta (P-Frames)")
+            else:
+                self.lbl_sum_param1.setText(f"Repeats: {self.spin_s_repeat.value()}x • Frequency: every {self.spin_s_freq.value()} frames")
+                self.lbl_sum_param2.setText("Replicates delta frames (P-Frames)")
         elif tab_idx == 2:
-            self.lbl_sum_mode_name.setText("Stitch Mosh (Łączenie dwóch wideo)")
-            name_b = os.path.basename(self.input_file_b) if self.input_file_b else "Brak wybranego pliku B"
-            self.lbl_sum_param1.setText(f"Drugi plik: {name_b}")
-            self.lbl_sum_param2.setText("Ruch z pliku B ożywia statyczną klatkę z pliku A")
+            self.lbl_sum_mode_name.setText("Stitch Mosh" if get_language() == 'en' else "Stitch Mosh (Łączenie dwóch wideo)")
+            name_b = os.path.basename(self.input_file_b) if self.input_file_b else (tr("lbl_no_b_selected"))
+            if get_language() == 'pl':
+                self.lbl_sum_param1.setText(f"Drugi plik: {name_b}")
+                self.lbl_sum_param2.setText("Ruch z pliku B ożywia statyczną klatkę z pliku A")
+            else:
+                self.lbl_sum_param1.setText(f"Video B: {name_b}")
+                self.lbl_sum_param2.setText("Motion from clip B animates freeze frame of clip A")
         elif tab_idx == 3:
-            self.lbl_sum_mode_name.setText("Cyber Glitch (Cyfrowa korupcja bitów)")
-            self.lbl_sum_param1.setText(f"Wskaźnik uszkodzeń: {self.slider_c_rate.value()}% klatek P")
-            self.lbl_sum_param2.setText(f"Intensywność zamiany bajtów: poziom {self.slider_c_intensity.value()}")
+            self.lbl_sum_mode_name.setText("Cyber Glitch" if get_language() == 'en' else "Cyber Glitch (Cyfrowa korupcja bitów)")
+            if get_language() == 'pl':
+                self.lbl_sum_param1.setText(f"Wskaźnik uszkodzeń: {self.slider_c_rate.value()}% klatek P")
+                self.lbl_sum_param2.setText(f"Intensywność zamiany bajtów: poziom {self.slider_c_intensity.value()}")
+            else:
+                self.lbl_sum_param1.setText(f"Corrupt Rate: {self.slider_c_rate.value()}% P-frames")
+                self.lbl_sum_param2.setText(f"Byte Intensity: Level {self.slider_c_intensity.value()}")
         elif tab_idx == 4:
-            self.lbl_sum_mode_name.setText("Flow Drift (Przepływ optyczny Farneback)")
-            self.lbl_sum_param1.setText(f"Skala przepływu: {self.spin_fl_scale.value():.1f} • Wygaszanie śladu: {self.spin_fl_decay.value():.2f}")
-            self.lbl_sum_param2.setText("Dynamiczna deformacja pola wektorów na ekranie")
+            self.lbl_sum_mode_name.setText("Flow Drift" if get_language() == 'en' else "Flow Drift (Przepływ optyczny Farneback)")
+            if get_language() == 'pl':
+                self.lbl_sum_param1.setText(f"Skala przepływu: {self.spin_fl_scale.value():.1f} • Wygaszanie śladu: {self.spin_fl_decay.value():.2f}")
+                self.lbl_sum_param2.setText("Dynamiczna deformacja pola wektorów na ekranie")
+            else:
+                self.lbl_sum_param1.setText(f"Flow Scale: {self.spin_fl_scale.value():.1f} • Trail Decay: {self.spin_fl_decay.value():.2f}")
+                self.lbl_sum_param2.setText("Optical flow field drift and trail accumulation")
         else:
-            self.lbl_sum_mode_name.setText("RGB Channel Split (Aberracja chromatyczna)")
+            self.lbl_sum_mode_name.setText("RGB Channel Split" if get_language() == 'en' else "RGB Channel Split (Aberracja chromatyczna)")
             dir_text = self.combo_rgb_direction.currentText()
-            self.lbl_sum_param1.setText(f"Lag: {self.spin_rgb_delay.value()} kl. • Shift: {self.spin_rgb_shift.value()} px ({dir_text})")
-            self.lbl_sum_param2.setText(f"Zakłócenia linii VHS: {self.slider_rgb_jitter.value()}% szansy na klatkę")
+            if get_language() == 'pl':
+                self.lbl_sum_param1.setText(f"Lag: {self.spin_rgb_delay.value()} kl. • Shift: {self.spin_rgb_shift.value()} px ({dir_text})")
+                self.lbl_sum_param2.setText(f"Zakłócenia linii VHS: {self.slider_rgb_jitter.value()}% szansy na klatkę")
+            else:
+                self.lbl_sum_param1.setText(f"Lag: {self.spin_rgb_delay.value()} fr. • Shift: {self.spin_rgb_shift.value()} px ({dir_text})")
+                self.lbl_sum_param2.setText(f"VHS Jitter: {self.slider_rgb_jitter.value()}% chance per frame")
 
         # 3. Audio Tile
         if self.chk_keep_audio.isChecked():
-            self.lbl_sum_audio_status.setText("Ścieżka audio: Zachowana (Oryginał)")
+            self.lbl_sum_audio_status.setText(tr("tile_audio_on"))
         else:
-            self.lbl_sum_audio_status.setText("Ścieżka audio: Wyciszona (Brak audio)")
+            self.lbl_sum_audio_status.setText(tr("tile_audio_off"))
 
         # 4. Output File Tile
         mode_keys = ['volcano_melt', 'motion_smear', 'stitch_mosh', 'cyber_glitch', 'flow_drift', 'rgb_split']
@@ -311,7 +369,7 @@ class MoshUpApp(QMainWindow):
 
         self.lbl_sum_output_file.setText(os.path.basename(self.output_file))
         dir_name = os.path.dirname(self.output_file) or "."
-        self.lbl_sum_output_dir.setText(f"Folder: {dir_name}")
+        self.lbl_sum_output_dir.setText(tr("tile_dir_label", folder=dir_name))
 
     # LOGIC, EVENTS & WORKERS
     def log(self, text):
@@ -319,25 +377,24 @@ class MoshUpApp(QMainWindow):
         self.log_console.append(timestamp + text)
 
     def show_about_dialog(self):
-        QMessageBox.about(
-            self,
-            "O programie MoshUp Studio",
-            "<h3>MoshUp Studio</h3>"
-            "<p>Nowoczesne studio do zaawansowanego zniekształcania wideo (Datamoshing) oparte na PySide6 i FFmpeg.</p>"
-            "<p><b>Tryby zniekształceń:</b></p>"
-            "<ul>"
-            "<li><b>Volcano Melt</b>: Usuwanie klatek kluczowych (I-Frames) w zadanym oknie czasowym</li>"
-            "<li><b>Endless Motion Smear</b>: Powielanie klatek delta (P-Frames)</li>"
-            "<li><b>Stitch Mosh</b>: Przenoszenie ruchu z drugiego klipu (Video B) na klatkę z Video A</li>"
-            "<li><b>Cyber Glitch</b>: Bezpośrednie uszkadzanie bitów wektorów ruchu</li>"
-            "<li><b>Flow Drift</b>: Organiczny dryf pikseli obliczany metodą przepływu optycznego</li>"
-            "<li><b>RGB Channel Split</b>: Rozszczepianie kanałów barwnych (Red, Green, Blue) z opóźnieniem czasowym i przesunięciem przestrzennym</li>"
-            "</ul>"
+        about_html = (
+            f"{tr('about_heading')}"
+            f"{tr('about_desc')}"
+            f"{tr('about_modes_title')}"
+            f"<ul>"
+            f"{tr('about_mode_volcano')}"
+            f"{tr('about_mode_smear')}"
+            f"{tr('about_mode_stitch')}"
+            f"{tr('about_mode_cyber')}"
+            f"{tr('about_mode_flow')}"
+            f"{tr('about_mode_rgb')}"
+            f"</ul>"
         )
+        QMessageBox.about(self, tr("about_title"), about_html)
 
     def browse_input_a(self):
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Wybierz plik wideo A", "", "Pliki wideo (*.mp4 *.avi *.mov *.mkv *.webm);;Wszystkie pliki (*.*)"
+            self, tr("file_dialog_select_a"), "", tr("file_dialog_video_filter")
         )
         if file_path:
             self.set_input_file_a(file_path)
@@ -368,7 +425,7 @@ class MoshUpApp(QMainWindow):
         self.lbl_file_name_val.setText(os.path.basename(file_path))
         self.lbl_file_dur_val.setText(f"{format_seconds_to_timestamp(self.video_duration)} ({self.video_duration:.1f} s)")
         self.lbl_file_res_val.setText(f"{self.video_width} × {self.video_height} px")
-        self.lbl_file_fps_val.setText(f"{self.video_fps:.2f} fps ({self.video_frames} klatek)")
+        self.lbl_file_fps_val.setText(f"{self.video_fps:.2f} fps ({self.video_frames} frames)" if get_language() == 'en' else f"{self.video_fps:.2f} fps ({self.video_frames} klatek)")
         self.lbl_file_size_val.setText(f"{self.video_size_mb:.2f} MB")
 
         # Load into source preview player
@@ -377,7 +434,7 @@ class MoshUpApp(QMainWindow):
         # Switch to loaded view in Screen 1
         self.upload_content_stack.setCurrentIndex(1)
         self.btn_step1_next.setEnabled(True)
-        self.lbl_step1_hint.setText(f"Załadowano: {os.path.basename(file_path)}. Możesz przejść dalej.")
+        self.lbl_step1_hint.setText(f"{tr('badge_loaded_success')}: {os.path.basename(file_path)}")
 
         # Default start and end for Volcano Melt
         self.txt_ts_start.setText("00:00")
@@ -387,7 +444,7 @@ class MoshUpApp(QMainWindow):
         # Generate output filename
         self.update_random_output_filename()
 
-        self.log(f"Wczytano wideo: {file_path} (Czas: {format_seconds_to_timestamp(self.video_duration)}, {self.video_width}x{self.video_height})")
+        self.log(tr("log_video_a_loaded", path=file_path))
 
     def set_ts_start_from_cursor(self):
         curr_sec = self.source_player.get_current_seconds() if hasattr(self, 'source_player') and self.source_player.cap else 0.0
@@ -411,41 +468,47 @@ class MoshUpApp(QMainWindow):
 
         if start_sec is None:
             self.lbl_ts_validation.setStyleSheet("color: #b91c1c; font-weight: 700; background-color: #fee2e2; padding: 5px 10px; border-radius: 8px; border: 1px solid #fecaca;")
-            self.lbl_ts_validation.setText("Nieprawidłowy format czasu początkowego (użyj MM:SS lub MM:SS.s)")
+            self.lbl_ts_validation.setText(tr("ts_error_format"))
             return False
 
         if end_sec is None:
             self.lbl_ts_validation.setStyleSheet("color: #b91c1c; font-weight: 700; background-color: #fee2e2; padding: 5px 10px; border-radius: 8px; border: 1px solid #fecaca;")
-            self.lbl_ts_validation.setText("Nieprawidłowy format czasu końcowego (użyj MM:SS lub MM:SS.s)")
+            self.lbl_ts_validation.setText(tr("ts_error_format"))
             return False
 
         if start_sec >= end_sec:
             self.lbl_ts_validation.setStyleSheet("color: #b91c1c; font-weight: 700; background-color: #fee2e2; padding: 5px 10px; border-radius: 8px; border: 1px solid #fecaca;")
-            self.lbl_ts_validation.setText(f"Czas końcowy ({format_seconds_to_timestamp(end_sec)}) musi być większy niż czas początkowy ({format_seconds_to_timestamp(start_sec)})")
+            if get_language() == 'pl':
+                self.lbl_ts_validation.setText(f"Czas końcowy ({format_seconds_to_timestamp(end_sec)}) musi być większy niż czas początkowy ({format_seconds_to_timestamp(start_sec)})")
+            else:
+                self.lbl_ts_validation.setText(f"End time ({format_seconds_to_timestamp(end_sec)}) must be greater than start time ({format_seconds_to_timestamp(start_sec)})")
             return False
 
         if self.video_duration > 0 and end_sec > self.video_duration:
             self.lbl_ts_validation.setStyleSheet("color: #b45309; font-weight: 700; background-color: #fef3c7; padding: 5px 10px; border-radius: 8px; border: 1px solid #fde68a;")
-            self.lbl_ts_validation.setText(f"Czas końcowy ({format_seconds_to_timestamp(end_sec)}) przekracza długość filmu ({format_seconds_to_timestamp(self.video_duration)})")
+            if get_language() == 'pl':
+                self.lbl_ts_validation.setText(f"Czas końcowy ({format_seconds_to_timestamp(end_sec)}) przekracza długość filmu ({format_seconds_to_timestamp(self.video_duration)})")
+            else:
+                self.lbl_ts_validation.setText(f"End time ({format_seconds_to_timestamp(end_sec)}) exceeds video length ({format_seconds_to_timestamp(self.video_duration)})")
             return False
 
         duration = end_sec - start_sec
         self.lbl_ts_validation.setStyleSheet("color: #0f172a; font-weight: 700; background-color: #e2ebf5; padding: 5px 10px; border-radius: 8px; border: 1px solid #c8d8ea;")
-        self.lbl_ts_validation.setText(f"Prawidłowy przedział: {format_seconds_to_timestamp(start_sec)} do {format_seconds_to_timestamp(end_sec)} [Długość okna: {duration:.1f} s]")
+        self.lbl_ts_validation.setText(tr("ts_valid_hint", start=format_seconds_to_timestamp(start_sec), end=format_seconds_to_timestamp(end_sec), duration=duration))
         return True
 
     def browse_input_b(self):
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Wybierz plik wideo B", "", "Pliki wideo (*.mp4 *.avi *.mov *.mkv *.webm);;Wszystkie pliki (*.*)"
+            self, tr("file_dialog_select_b"), "", tr("file_dialog_video_filter")
         )
         if file_path:
             self.input_file_b = file_path
             self.lbl_file_b_path.setText(os.path.basename(file_path))
-            self.log(f"Wczytano wideo B: {file_path}")
+            self.log(tr("log_video_b_loaded", path=file_path))
 
     def browse_output(self):
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Zapisz wyjściowy film Datamosh", self.output_file or f"moshup_output_export.mp4", "MP4 Video (*.mp4);;AVI Video (*.avi)"
+            self, tr("file_dialog_save_output"), self.output_file or "moshup_output_export.mp4", tr("file_dialog_save_filter")
         )
         if file_path:
             self.output_file = file_path
@@ -475,13 +538,13 @@ class MoshUpApp(QMainWindow):
 
         if mode == 'volcano_melt':
             if not self.validate_timestamps():
-                QMessageBox.warning(self, "Błąd zakresu czasu", "Popraw przedział czasu w zakładce Volcano Melt przed startem!")
+                QMessageBox.warning(self, tr("dialog_ts_error_title"), tr("dialog_ts_error_msg"))
                 self.go_to_step(1)
                 return
 
         if mode == 'stitch_mosh':
             if not self.input_file_b or not os.path.exists(self.input_file_b):
-                QMessageBox.warning(self, "Brak drugiego wideo", "Wybierz plik Wideo B dla trybu Stitch Mosh!")
+                QMessageBox.warning(self, tr("dialog_no_video_b_title"), tr("dialog_no_video_b_msg"))
                 self.go_to_step(1)
                 return
 
@@ -513,9 +576,9 @@ class MoshUpApp(QMainWindow):
         self.btn_step3_back.setEnabled(False)
         self.btn_step3_next.setEnabled(False)
         self.progress_bar.setValue(0)
-        self.lbl_status.setText("Status: Przetwarzanie w toku...")
+        self.lbl_status.setText(tr("status_in_progress"))
 
-        self.log(f"Rozpoczynanie zadania: tryb '{mode}' -> {self.output_file}")
+        self.log(tr("log_task_start", mode=mode, output=self.output_file))
 
         self.worker = DatamoshWorker(mode, self.input_file_a, self.output_file, options)
         self.worker.progress_signal.connect(self.on_worker_progress)
@@ -525,7 +588,7 @@ class MoshUpApp(QMainWindow):
 
     def on_worker_progress(self, pct, msg):
         self.progress_bar.setValue(pct)
-        self.lbl_status.setText(f"Status: Przetwarzanie ({pct}%)")
+        self.lbl_status.setText(tr("status_processing", pct=pct))
         self.log(f"[{pct}%] {msg}")
 
     def on_worker_finished(self, out_path):
@@ -533,12 +596,12 @@ class MoshUpApp(QMainWindow):
         self.btn_step3_back.setEnabled(True)
         self.btn_step3_next.setEnabled(True)
         self.progress_bar.setValue(100)
-        self.lbl_status.setText("Status: Zakończono sukcesem!")
+        self.lbl_status.setText(tr("status_success"))
 
         self.max_reached_step = max(self.max_reached_step, 3)
         self.update_stepper_and_rail()
 
-        self.log(f"Sukces: Gotowy film zapisano w {out_path}")
+        self.log(tr("log_success", path=out_path))
         self.lbl_result_path.setText(out_path)
 
         # Preload into preview player
@@ -551,14 +614,14 @@ class MoshUpApp(QMainWindow):
         self.btn_start.setEnabled(True)
         self.btn_step3_back.setEnabled(True)
         self.progress_bar.setValue(0)
-        self.lbl_status.setText("Status: Wystąpił błąd")
-        self.log(f"Błąd: {err_msg}")
-        QMessageBox.critical(self, "Błąd przetwarzania", f"Wystąpił błąd podczas procesu datamosh:\n\n{err_msg}")
+        self.lbl_status.setText(tr("status_error"))
+        self.log(tr("log_error", err=err_msg))
+        QMessageBox.critical(self, tr("dialog_render_error_title"), tr("dialog_render_error_msg", err=err_msg))
 
     # FAST DRAFT (3-second instant preview)
     def start_fast_draft(self):
         if not self.input_file_a or not os.path.exists(self.input_file_a):
-            QMessageBox.warning(self, "Brak pliku wideo", "Wybierz najpierw plik wideo w kroku 1!")
+            QMessageBox.warning(self, tr("dialog_no_video_title"), tr("dialog_no_video_msg"))
             self.go_to_step(0)
             return
 
@@ -575,12 +638,12 @@ class MoshUpApp(QMainWindow):
 
         if mode == 'volcano_melt':
             if not self.validate_timestamps():
-                QMessageBox.warning(self, "Błąd zakresu czasu", "Popraw przedział czasu w zakładce Volcano Melt przed podglądem!")
+                QMessageBox.warning(self, tr("dialog_ts_error_title"), tr("dialog_ts_error_msg"))
                 return
 
         if mode == 'stitch_mosh':
             if not self.input_file_b or not os.path.exists(self.input_file_b):
-                QMessageBox.warning(self, "Brak drugiego wideo", "Wybierz plik Wideo B dla trybu Stitch Mosh przed wygenerowaniem podglądu!")
+                QMessageBox.warning(self, tr("dialog_no_video_b_title"), tr("dialog_no_video_b_msg"))
                 return
 
         if mode == 'volcano_melt':
@@ -639,7 +702,7 @@ class MoshUpApp(QMainWindow):
     def on_draft_error(self, err_msg):
         if hasattr(self, 'fast_draft_widget'):
             self.fast_draft_widget.show_button()
-        QMessageBox.critical(self, "Błąd szybkiego podglądu", f"Nie udało się wygenerować wycinka:\n\n{err_msg}")
+        QMessageBox.critical(self, tr("dialog_draft_error_title"), tr("dialog_draft_error_msg", err=err_msg))
 
     # PREVIEW SCREEN ACTIONS (Compare Source vs Result)
     def show_preview_result(self):
@@ -651,7 +714,7 @@ class MoshUpApp(QMainWindow):
         self.btn_view_source.style().polish(self.btn_view_source)
 
         if hasattr(self, 'lbl_player_mode_tag'):
-            self.lbl_player_mode_tag.setText("Oglądasz: Wygenerowany plik Datamosh")
+            self.lbl_player_mode_tag.setText(tr("tag_viewing_result"))
         if self.output_file and os.path.exists(self.output_file):
             self.lbl_result_path.setText(self.output_file)
             self.preview_player.load_video(self.output_file)
@@ -665,7 +728,7 @@ class MoshUpApp(QMainWindow):
         self.btn_view_source.style().polish(self.btn_view_source)
 
         if hasattr(self, 'lbl_player_mode_tag'):
-            self.lbl_player_mode_tag.setText("Oglądasz: Oryginalny plik wideo (Przed efektem)")
+            self.lbl_player_mode_tag.setText(tr("tag_viewing_source"))
         if self.input_file_a and os.path.exists(self.input_file_a):
             self.lbl_result_path.setText(self.input_file_a)
             self.preview_player.load_video(self.input_file_a)
@@ -690,16 +753,13 @@ class MoshUpApp(QMainWindow):
     def confirm_and_reset_app(self):
         """Displays a confirmation dialog before resetting all application parameters and state."""
         msg_box = QMessageBox(self)
-        msg_box.setWindowTitle("Resetowanie parametrów")
-        msg_box.setText("<h3>Czy chcesz zresetować parametry do stanu początkowego?</h3>")
-        msg_box.setInformativeText(
-            "Wszystkie wczytane pliki wideo, zmodyfikowane parametry efektów, "
-            "wygenerowane podglądy oraz stan renderowania zostaną przywrócone do stanu zerowego (uruchomienia)."
-        )
+        msg_box.setWindowTitle(tr("dialog_reset_title"))
+        msg_box.setText(tr("dialog_reset_heading"))
+        msg_box.setInformativeText(tr("dialog_reset_info"))
         msg_box.setIcon(QMessageBox.Icon.Question)
-        btn_reset = msg_box.addButton("  Zresetuj wszystko", QMessageBox.ButtonRole.AcceptRole)
+        btn_reset = msg_box.addButton(tr("btn_reset_all"), QMessageBox.ButtonRole.AcceptRole)
         btn_reset.setProperty("class", "btnPrimary")
-        btn_cancel = msg_box.addButton("  Anuluj", QMessageBox.ButtonRole.RejectRole)
+        btn_cancel = msg_box.addButton(tr("btn_cancel"), QMessageBox.ButtonRole.RejectRole)
         btn_cancel.setProperty("class", "btnSecondary")
         msg_box.setDefaultButton(btn_cancel)
         btn_reset.setIcon(get_lucide_icon("rotate-ccw", color="#64748b", size=14))
@@ -725,7 +785,7 @@ class MoshUpApp(QMainWindow):
             if self.source_player.cap:
                 self.source_player.cap.release()
                 self.source_player.cap = None
-            self.source_player.display_label.setText("Brak załadowanego wideo")
+            self.source_player.display_label.setText(tr("player_no_video"))
             self.source_player.display_label.setPixmap(QPixmap())
             self.source_player.time_label.setText("00:00 / 00:00")
             self.source_player.slider.setValue(0)
@@ -740,7 +800,7 @@ class MoshUpApp(QMainWindow):
             if self.preview_player.cap:
                 self.preview_player.cap.release()
                 self.preview_player.cap = None
-            self.preview_player.display_label.setText("Brak załadowanego wideo")
+            self.preview_player.display_label.setText(tr("player_no_video"))
             self.preview_player.display_label.setPixmap(QPixmap())
             self.preview_player.time_label.setText("00:00 / 00:00")
             self.preview_player.slider.setValue(0)
@@ -762,7 +822,7 @@ class MoshUpApp(QMainWindow):
         # 4. Step 1 (Upload Page) reset
         self.upload_content_stack.setCurrentIndex(0)
         self.btn_step1_next.setEnabled(False)
-        self.lbl_step1_hint.setText("Wybierz plik wideo, aby przejść do konfiguracji efektów.")
+        self.lbl_step1_hint.setText(tr("step1_hint_empty"))
         self.lbl_file_name_val.setText("-")
         self.lbl_file_dur_val.setText("-")
         self.lbl_file_res_val.setText("-")
@@ -777,9 +837,9 @@ class MoshUpApp(QMainWindow):
         self.btn_step3_back.setEnabled(True)
         self.btn_step3_next.setEnabled(False)
         self.progress_bar.setValue(0)
-        self.lbl_status.setText("Status: Oczekiwanie na rozpoczęcie")
+        self.lbl_status.setText(tr("status_ready"))
         self.log_console.clear()
-        self.log_console.append("MoshUp Studio gotowe.")
+        self.log_console.append(tr("console_ready"))
         self.lbl_sum_src_name.setText("-")
         self.lbl_sum_src_meta1.setText("-")
         self.lbl_sum_src_meta2.setText("-")
@@ -791,7 +851,7 @@ class MoshUpApp(QMainWindow):
         self.lbl_sum_output_dir.setText("-")
 
         # 7. Step 4 (Preview Page) reset
-        self.lbl_result_path.setText("Brak wygenerowanego pliku")
+        self.lbl_result_path.setText(tr("lbl_no_output_file"))
         self.btn_open_video.setEnabled(False)
         self.btn_open_folder.setEnabled(False)
 
@@ -799,11 +859,11 @@ class MoshUpApp(QMainWindow):
         self.go_to_step(0)
         self.update_stepper_and_rail()
 
-        self.log("Zresetowano parametry aplikacji do stanu początkowego.")
+        self.log(tr("log_reset_done"))
 
     def reset_new_project(self):
         reply = QMessageBox.question(
-            self, "Nowy projekt", "Czy chcesz zresetować bieżący projekt i wczytać nowe wideo?",
+            self, tr("dialog_new_project_title"), tr("dialog_new_project_msg"),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         if reply == QMessageBox.StandardButton.Yes:

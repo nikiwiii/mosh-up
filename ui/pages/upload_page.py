@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 from lucide_icons import get_lucide_icon
 from ..widgets import DropAreaWidget, VideoPreviewWidget
 from ..utils import apply_card_shadow
+from i18n import tr
 
 
 class UploadPage(QWidget):
@@ -26,13 +27,13 @@ class UploadPage(QWidget):
         h_layout.setContentsMargins(18, 14, 18, 14)
         h_layout.setSpacing(4)
 
-        lbl_h_title = QLabel("Krok 1: Wczytaj plik wideo", header_card)
-        lbl_h_title.setProperty("class", "pageHeaderTitle")
-        lbl_h_sub = QLabel("Przeciągnij i upuść plik wideo, który posłuży jako baza dla zniekształceń i efektów datamoshingu.", header_card)
-        lbl_h_sub.setProperty("class", "pageHeaderSubtitle")
+        self.lbl_h_title = QLabel(tr("step1_title"), header_card)
+        self.lbl_h_title.setProperty("class", "pageHeaderTitle")
+        self.lbl_h_sub = QLabel(tr("step1_subtitle"), header_card)
+        self.lbl_h_sub.setProperty("class", "pageHeaderSubtitle")
 
-        h_layout.addWidget(lbl_h_title)
-        h_layout.addWidget(lbl_h_sub)
+        h_layout.addWidget(self.lbl_h_title)
+        h_layout.addWidget(self.lbl_h_sub)
         apply_card_shadow(header_card)
         layout.addWidget(header_card)
 
@@ -56,7 +57,7 @@ class UploadPage(QWidget):
 
         btn_row = QHBoxLayout()
         btn_row.addStretch()
-        self.btn_browse_empty = QPushButton("  Wybierz plik wideo z dysku...", drop_card)
+        self.btn_browse_empty = QPushButton(tr("btn_browse_file"), drop_card)
         self.btn_browse_empty.setProperty("class", "btnPrimary")
         self.btn_browse_empty.setIcon(get_lucide_icon("folder-open", color="#ffffff", size=17))
         self.btn_browse_empty.setFixedHeight(44)
@@ -82,9 +83,9 @@ class UploadPage(QWidget):
         spc_layout.setSpacing(10)
 
         spc_hdr = QHBoxLayout()
-        lbl_spc_title = QLabel("Podgląd wideo źródłowego", source_player_card)
-        lbl_spc_title.setProperty("class", "sectionTitle")
-        spc_hdr.addWidget(lbl_spc_title)
+        self.lbl_spc_title = QLabel(tr("source_preview_title"), source_player_card)
+        self.lbl_spc_title.setProperty("class", "sectionTitle")
+        spc_hdr.addWidget(self.lbl_spc_title)
         spc_hdr.addStretch()
         spc_layout.addLayout(spc_hdr)
 
@@ -101,11 +102,11 @@ class UploadPage(QWidget):
         mc_layout.setContentsMargins(18, 16, 18, 16)
         mc_layout.setSpacing(12)
 
-        lbl_mc_title = QLabel("Informacje o pliku", meta_card)
-        lbl_mc_title.setProperty("class", "sectionTitle")
-        mc_layout.addWidget(lbl_mc_title)
+        self.lbl_mc_title = QLabel(tr("file_info_title"), meta_card)
+        self.lbl_mc_title.setProperty("class", "sectionTitle")
+        mc_layout.addWidget(self.lbl_mc_title)
 
-        self.lbl_source_status_badge = QLabel("✓ Plik załadowany pomyślnie", meta_card)
+        self.lbl_source_status_badge = QLabel(tr("badge_loaded_success"), meta_card)
         self.lbl_source_status_badge.setStyleSheet("""
             background-color: #d1fae5;
             color: #065f46;
@@ -133,30 +134,47 @@ class UploadPage(QWidget):
         self.lbl_file_size_val = QLabel("-", meta_card)
         self.lbl_file_size_val.setStyleSheet("font-size: 12px; font-weight: 600; color: #334155;")
 
-        details_box = QGroupBox("Parametry techniczne", meta_card)
-        db_layout = QVBoxLayout(details_box)
+        self.details_box = QGroupBox(tr("tech_params_title"), meta_card)
+        db_layout = QVBoxLayout(self.details_box)
         db_layout.setContentsMargins(12, 14, 12, 12)
         db_layout.setSpacing(8)
 
-        def make_meta_row(label, val_widget):
+        self.lbl_meta_name = QLabel(tr("meta_filename"), self.details_box)
+        self.lbl_meta_name.setStyleSheet("font-weight: 600; color: #64748b; font-size: 12px;")
+        self.lbl_meta_name.setFixedWidth(110)
+
+        self.lbl_meta_dur = QLabel(tr("meta_duration"), self.details_box)
+        self.lbl_meta_dur.setStyleSheet("font-weight: 600; color: #64748b; font-size: 12px;")
+        self.lbl_meta_dur.setFixedWidth(110)
+
+        self.lbl_meta_res = QLabel(tr("meta_resolution"), self.details_box)
+        self.lbl_meta_res.setStyleSheet("font-weight: 600; color: #64748b; font-size: 12px;")
+        self.lbl_meta_res.setFixedWidth(110)
+
+        self.lbl_meta_fps = QLabel(tr("meta_fps"), self.details_box)
+        self.lbl_meta_fps.setStyleSheet("font-weight: 600; color: #64748b; font-size: 12px;")
+        self.lbl_meta_fps.setFixedWidth(110)
+
+        self.lbl_meta_size = QLabel(tr("meta_filesize"), self.details_box)
+        self.lbl_meta_size.setStyleSheet("font-weight: 600; color: #64748b; font-size: 12px;")
+        self.lbl_meta_size.setFixedWidth(110)
+
+        def make_row(lbl_widget, val_widget):
             row = QHBoxLayout()
-            lbl = QLabel(label, details_box)
-            lbl.setStyleSheet("font-weight: 600; color: #64748b; font-size: 12px;")
-            lbl.setFixedWidth(110)
-            row.addWidget(lbl)
+            row.addWidget(lbl_widget)
             row.addWidget(val_widget, 1)
             return row
 
-        db_layout.addLayout(make_meta_row("Nazwa pliku:", self.lbl_file_name_val))
-        db_layout.addLayout(make_meta_row("Czas trwania:", self.lbl_file_dur_val))
-        db_layout.addLayout(make_meta_row("Rozdzielczość:", self.lbl_file_res_val))
-        db_layout.addLayout(make_meta_row("Klatkaż (FPS):", self.lbl_file_fps_val))
-        db_layout.addLayout(make_meta_row("Rozmiar:", self.lbl_file_size_val))
-        mc_layout.addWidget(details_box)
+        db_layout.addLayout(make_row(self.lbl_meta_name, self.lbl_file_name_val))
+        db_layout.addLayout(make_row(self.lbl_meta_dur, self.lbl_file_dur_val))
+        db_layout.addLayout(make_row(self.lbl_meta_res, self.lbl_file_res_val))
+        db_layout.addLayout(make_row(self.lbl_meta_fps, self.lbl_file_fps_val))
+        db_layout.addLayout(make_row(self.lbl_meta_size, self.lbl_file_size_val))
+        mc_layout.addWidget(self.details_box)
 
         mc_layout.addStretch()
 
-        self.btn_replace_video = QPushButton("  Zmień plik wideo...", meta_card)
+        self.btn_replace_video = QPushButton(tr("btn_replace_video"), meta_card)
         self.btn_replace_video.setProperty("class", "btnSecondary")
         self.btn_replace_video.setIcon(get_lucide_icon("folder-open", color="#1e293b", size=15))
         self.btn_replace_video.setFixedHeight(38)
@@ -174,12 +192,12 @@ class UploadPage(QWidget):
         nc_layout = QHBoxLayout(nav_card)
         nc_layout.setContentsMargins(14, 8, 14, 8)
 
-        self.lbl_step1_hint = QLabel("Wybierz plik wideo, aby przejść do konfiguracji efektów.", nav_card)
+        self.lbl_step1_hint = QLabel(tr("step1_hint_empty"), nav_card)
         self.lbl_step1_hint.setStyleSheet("color: #64748b; font-size: 12px; font-weight: 500;")
         nc_layout.addWidget(self.lbl_step1_hint)
         nc_layout.addStretch()
 
-        self.btn_step1_next = QPushButton("  Dalej: Wybierz efekty", nav_card)
+        self.btn_step1_next = QPushButton(tr("btn_next_effects"), nav_card)
         self.btn_step1_next.setProperty("class", "btnPrimary")
         self.btn_step1_next.setIcon(get_lucide_icon("arrow-right", color="#ffffff", size=15))
         self.btn_step1_next.setFixedHeight(38)
@@ -188,3 +206,22 @@ class UploadPage(QWidget):
 
         apply_card_shadow(nav_card, blur=10, offset_y=2, alpha=20)
         layout.addWidget(nav_card)
+
+    def retranslate_ui(self):
+        """Retranslates all text on Step 1."""
+        self.lbl_h_title.setText(tr("step1_title"))
+        self.lbl_h_sub.setText(tr("step1_subtitle"))
+        self.drop_area.retranslate_ui()
+        self.btn_browse_empty.setText(tr("btn_browse_file"))
+        self.lbl_spc_title.setText(tr("source_preview_title"))
+        self.lbl_mc_title.setText(tr("file_info_title"))
+        self.lbl_source_status_badge.setText(tr("badge_loaded_success"))
+        self.details_box.setTitle(tr("tech_params_title"))
+        self.lbl_meta_name.setText(tr("meta_filename"))
+        self.lbl_meta_dur.setText(tr("meta_duration"))
+        self.lbl_meta_res.setText(tr("meta_resolution"))
+        self.lbl_meta_fps.setText(tr("meta_fps"))
+        self.lbl_meta_size.setText(tr("meta_filesize"))
+        self.btn_replace_video.setText(tr("btn_replace_video"))
+        self.btn_step1_next.setText(tr("btn_next_effects"))
+        self.source_player.retranslate_ui()

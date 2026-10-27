@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
 )
 from lucide_icons import get_lucide_icon
 from datamosh_engine import format_seconds_to_timestamp
+from i18n import tr
 
 
 class VideoPreviewWidget(QWidget):
@@ -56,14 +57,14 @@ class VideoPreviewWidget(QWidget):
             }
         """)
         self.display_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.display_label.setText("Brak załadowanego wideo")
+        self.display_label.setText(tr("player_no_video"))
         layout.addWidget(self.display_label, 1)
 
         # Controls Row
         ctrl_layout = QHBoxLayout()
         ctrl_layout.setSpacing(10)
 
-        self.btn_play = QPushButton("  Odtwórz", self)
+        self.btn_play = QPushButton(tr("btn_play"), self)
         self.btn_play.setIcon(get_lucide_icon("play", color="#1e293b", size=15))
         self.btn_play.setFixedWidth(105)
         self.btn_play.clicked.connect(self.toggle_play)
@@ -90,6 +91,11 @@ class VideoPreviewWidget(QWidget):
 
         layout.addLayout(ctrl_layout)
 
+    def retranslate_ui(self):
+        if not self.cap or not self.cap.isOpened():
+            self.display_label.setText(tr("player_no_video"))
+        self.btn_play.setText(tr("btn_pause") if self.is_playing else tr("btn_play"))
+
     def play(self):
         if not self.cap or not self.cap.isOpened():
             return
@@ -106,14 +112,14 @@ class VideoPreviewWidget(QWidget):
 
         # 10ms tick ensures we evaluate frame presentation within <=10ms of deadline
         self.timer.start(10)
-        self.btn_play.setText("  Wstrzymaj")
+        self.btn_play.setText(tr("btn_pause"))
         self.btn_play.setIcon(get_lucide_icon("pause", color="#1e293b", size=15))
 
     def pause(self):
         self.is_playing = False
         if self.timer.isActive():
             self.timer.stop()
-        self.btn_play.setText("  Odtwórz")
+        self.btn_play.setText(tr("btn_play"))
         self.btn_play.setIcon(get_lucide_icon("play", color="#1e293b", size=15))
 
     def toggle_play(self):
@@ -132,7 +138,7 @@ class VideoPreviewWidget(QWidget):
 
     def load_video(self, video_path):
         if not video_path or not os.path.exists(video_path):
-            self.display_label.setText("Nie można odnaleźć pliku")
+            self.display_label.setText(tr("player_file_not_found"))
             return
 
         self.pause()
@@ -143,7 +149,7 @@ class VideoPreviewWidget(QWidget):
         self.current_file_path = video_path
         self.cap = cv2.VideoCapture(video_path)
         if not self.cap.isOpened():
-            self.display_label.setText("Błąd odczytu wideo")
+            self.display_label.setText(tr("player_read_error"))
             return
 
         self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1
@@ -155,7 +161,7 @@ class VideoPreviewWidget(QWidget):
         self.cap_pos = 0
         self._last_rendered_frame = None
         self.seek_frame(0)
-        self.btn_play.setText("  Odtwórz")
+        self.btn_play.setText(tr("btn_play"))
         self.btn_play.setIcon(get_lucide_icon("play", color="#1e293b", size=15))
 
     def seek_frame(self, frame_no):

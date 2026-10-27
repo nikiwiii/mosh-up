@@ -2,6 +2,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QMessageBox
 from lucide_icons import get_lucide_pixmap
+from i18n import tr
 
 
 class DropAreaWidget(QFrame):
@@ -35,17 +36,21 @@ class DropAreaWidget(QFrame):
         self.icon_label.setPixmap(get_lucide_pixmap("upload", color="#475569", size=54))
         self.icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.text_title = QLabel("Przeciągnij i upuść plik wideo tutaj", self)
+        self.text_title = QLabel(tr("drop_title"), self)
         self.text_title.setStyleSheet("font-size: 16px; font-weight: 700; color: #1e293b; background: transparent;")
         self.text_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.text_subtitle = QLabel("lub wybierz plik z dysku komputera\nObsługiwane formaty: MP4, MOV, MKV, AVI, WEBM", self)
+        self.text_subtitle = QLabel(tr("drop_subtitle"), self)
         self.text_subtitle.setStyleSheet("font-size: 12px; font-weight: 500; color: #64748b; background: transparent; line-height: 1.4;")
         self.text_subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(self.icon_label)
         layout.addWidget(self.text_title)
         layout.addWidget(self.text_subtitle)
+
+    def retranslate_ui(self):
+        self.text_title.setText(tr("drop_title"))
+        self.text_subtitle.setText(tr("drop_subtitle"))
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -58,4 +63,4 @@ class DropAreaWidget(QFrame):
             if file_path.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv')):
                 self.file_dropped.emit(file_path)
             else:
-                QMessageBox.warning(self, "Nieobsługiwany format", "Wybierz prawidłowy plik wideo (MP4, AVI, MOV, MKV, WEBM)")
+                QMessageBox.warning(self, tr("dialog_no_video_title"), tr("file_dialog_video_filter"))

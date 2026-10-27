@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 )
 from lucide_icons import get_lucide_icon
 from datamosh_engine import format_seconds_to_timestamp
+from i18n import tr
 
 
 class FastDraftInlineWidget(QWidget):
@@ -55,12 +56,12 @@ class FastDraftInlineWidget(QWidget):
         pb_layout.setSpacing(0)
         pb_layout.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
-        self.btn_draft = QPushButton("  Podgląd 3s", page_btn)
+        self.btn_draft = QPushButton(tr("btn_fast_draft"), page_btn)
         self.btn_draft.setIcon(get_lucide_icon("zap", color="#ffffff", size=13))
         self.btn_draft.setFixedHeight(30)
         self.btn_draft.setFixedWidth(118)
         self.btn_draft.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_draft.setToolTip("Generuj 3-sekundowy podgląd z bieżącymi parametrami")
+        self.btn_draft.setToolTip(tr("fast_draft_tooltip"))
         self.btn_draft.setStyleSheet("""
             QPushButton {
                 background-color: #151829;
@@ -170,7 +171,7 @@ class FastDraftInlineWidget(QWidget):
         self.btn_refresh = QPushButton(self.preview_card)
         self.btn_refresh.setIcon(get_lucide_icon("rotate-ccw", color="#94a3b8", size=12))
         self.btn_refresh.setFixedSize(22, 22)
-        self.btn_refresh.setToolTip("Odśwież podgląd")
+        self.btn_refresh.setToolTip(tr("fast_draft_refresh"))
         self.btn_refresh.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_refresh.setStyleSheet("QPushButton { background: transparent; border: none; border-radius: 4px; } QPushButton:hover { background: #1e293b; }")
         self.btn_refresh.clicked.connect(self.draft_requested.emit)
@@ -179,7 +180,7 @@ class FastDraftInlineWidget(QWidget):
         self.btn_close = QPushButton(self.preview_card)
         self.btn_close.setIcon(get_lucide_icon("x", color="#94a3b8", size=12))
         self.btn_close.setFixedSize(22, 22)
-        self.btn_close.setToolTip("Zamknij podgląd")
+        self.btn_close.setToolTip(tr("fast_draft_close"))
         self.btn_close.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_close.setStyleSheet("QPushButton { background: transparent; border: none; border-radius: 4px; } QPushButton:hover { background: #1e293b; }")
         self.btn_close.clicked.connect(self.close_preview)
@@ -191,6 +192,12 @@ class FastDraftInlineWidget(QWidget):
         self.stack.addWidget(page_preview)  # Index 2
 
         self.show_button()
+
+    def retranslate_ui(self):
+        self.btn_draft.setText(tr("btn_fast_draft"))
+        self.btn_draft.setToolTip(tr("fast_draft_tooltip"))
+        self.btn_refresh.setToolTip(tr("fast_draft_refresh"))
+        self.btn_close.setToolTip(tr("fast_draft_close"))
 
     def sizeHint(self):
         curr = self.stack.currentWidget()
