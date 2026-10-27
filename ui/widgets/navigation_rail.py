@@ -10,6 +10,7 @@ class NavigationRail(QFrame):
     Contains buttons for each wizard step and an info button at the bottom.
     """
     step_selected = Signal(int)
+    reset_requested = Signal()
     info_requested = Signal()
 
     STEPS = [
@@ -42,6 +43,15 @@ class NavigationRail(QFrame):
             self.rail_buttons.append((btn, icon_name))
 
         sidebar_layout.addStretch()
+
+        # Reset Parameters Button
+        self.btn_nav_reset = QPushButton(self)
+        self.btn_nav_reset.setProperty("class", "navRailBtn")
+        self.btn_nav_reset.setFixedSize(44, 44)
+        self.btn_nav_reset.setIcon(get_lucide_icon("rotate-ccw", color="#64748b", size=18))
+        self.btn_nav_reset.setToolTip("Resetuj parametry do stanu początkowego")
+        self.btn_nav_reset.clicked.connect(self.reset_requested.emit)
+        sidebar_layout.addWidget(self.btn_nav_reset)
 
         # Bottom Info Button
         self.btn_nav_info = QPushButton(self)

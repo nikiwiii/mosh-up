@@ -4,6 +4,7 @@ import time
 import subprocess
 import cv2
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QFileDialog, QMessageBox, QStackedWidget
@@ -78,6 +79,7 @@ class MoshUpApp(QMainWindow):
         # 1. Left Navigation Rail
         self.sidebar_rail = NavigationRail(self)
         self.sidebar_rail.step_selected.connect(self.go_to_step)
+        self.sidebar_rail.reset_requested.connect(self.confirm_and_reset_app)
         self.sidebar_rail.info_requested.connect(self.show_about_dialog)
         root_layout.addWidget(self.sidebar_rail)
 
@@ -685,28 +687,127 @@ class MoshUpApp(QMainWindow):
             else:
                 subprocess.run(['open' if sys.platform == 'darwin' else 'xdg-open', target])
 
+    def confirm_and_reset_app(self):
+        """Displays a confirmation dialog before resetting all application parameters and state."""
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("Resetowanie parametrów")
+        msg_box.setText("<h3>Czy chcesz zresetować parametry do stanu początkowego?</h3>")
+        msg_box.setInformativeText(
+            "Wszystkie wczytane pliki wideo, zmodyfikowane parametry efektów, "
+            "wygenerowane podglądy oraz stan renderowania zostaną przywrócone do stanu zerowego (uruchomienia)."
+        )
+        msg_box.setIcon(QMessageBox.Icon.Question)
+        btn_reset = msg_box.addButton("  Zresetuj wszystko", QMessageBox.ButtonRole.AcceptRole)
+        btn_reset.setProperty("class", "btnPrimary")
+        btn_cancel = msg_box.addButton("  Anuluj", QMessageBox.ButtonRole.RejectRole)
+        btn_cancel.setProperty("class", "btnSecondary")
+        msg_box.setDefaultButton(btn_cancel)
+        btn_reset.setIcon(get_lucide_icon("rotate-ccw", color="#64748b", size=14))
+        btn_cancel.setIcon(get_lucide_icon("x", color="#64748b", size=14))
+
+        msg_box.exec()
+        if msg_box.clickedButton() == btn_reset:
+            self.reset_to_defaults()
+
+    def reset_to_defaults(self):
+        """Resets all app variables, players, controls, and wizard pages to pristine startup state."""
+        # 1. Stop background workers if running
+        if hasattr(self, 'worker') and self.worker and self.worker.isRunning():
+            self.worker.terminate()
+            self.worker = None
+        if hasattr(self, 'draft_worker') and self.draft_worker and self.draft_worker.isRunning():
+            self.draft_worker.terminate()
+            self.draft_worker = None
+
+        # 2. Stop and release video players
+        if hasattr(self, 'source_player'):
+            self.source_player.pause()
+            if self.source_player.cap:
+                self.source_player.cap.release()
+                self.source_player.cap = None
+            self.source_player.display_label.setText("Brak załadowanego wideo")
+            self.source_player.display_label.setPixmap(QPixmap())
+            self.source_player.time_label.setText("00:00 / 00:00")
+            self.source_player.slider.setValue(0)
+            self.source_player.slider.setRange(0, 0)
+            self.source_player.current_file_path = ""
+
+        if hasattr(self, 'fast_draft_widget'):
+            self.fast_draft_widget.reset()
+
+        if hasattr(self, 'preview_player'):
+            self.preview_player.pause()
+            if self.preview_player.cap:
+                self.preview_player.cap.release()
+                self.preview_player.cap = None
+            self.preview_player.display_label.setText("Brak załadowanego wideo")
+            self.preview_player.display_label.setPixmap(QPixmap())
+            self.preview_player.time_label.setText("00:00 / 00:00")
+            self.preview_player.slider.setValue(0)
+            self.preview_player.slider.setRange(0, 0)
+            self.preview_player.current_file_path = ""
+
+        # 3. Reset application state variables
+        self.input_file_a = ""
+        self.input_file_b = ""
+        self.output_file = ""
+        self.video_duration = 0.0
+        self.video_fps = 30.0
+        self.video_width = 0
+        self.video_height = 0
+        self.video_frames = 0
+        self.video_size_mb = 0.0
+        self.max_reached_step = 0
+
+        # 4. Step 1 (Upload Page) reset
+        self.upload_content_stack.setCurrentIndex(0)
+        self.btn_step1_next.setEnabled(False)
+        self.lbl_step1_hint.setText("Wybierz plik wideo, aby przejść do konfiguracji efektów.")
+        self.lbl_file_name_val.setText("-")
+        self.lbl_file_dur_val.setText("-")
+        self.lbl_file_res_val.setText("-")
+        self.lbl_file_fps_val.setText("-")
+        self.lbl_file_size_val.setText("-")
+
+        # 5. Step 2 (Effects Page) reset
+        self.page_effects.reset_parameters()
+
+        # 6. Step 3 (Render Page) reset
+        self.btn_start.setEnabled(True)
+        self.btn_step3_back.setEnabled(True)
+        self.btn_step3_next.setEnabled(False)
+        self.progress_bar.setValue(0)
+        self.lbl_status.setText("Status: Oczekiwanie na rozpoczęcie")
+        self.log_console.clear()
+        self.log_console.append("MoshUp Studio gotowe.")
+        self.lbl_sum_src_name.setText("-")
+        self.lbl_sum_src_meta1.setText("-")
+        self.lbl_sum_src_meta2.setText("-")
+        self.lbl_sum_mode_name.setText("-")
+        self.lbl_sum_param1.setText("-")
+        self.lbl_sum_param2.setText("-")
+        self.lbl_sum_audio_status.setText("-")
+        self.lbl_sum_output_file.setText("-")
+        self.lbl_sum_output_dir.setText("-")
+
+        # 7. Step 4 (Preview Page) reset
+        self.lbl_result_path.setText("Brak wygenerowanego pliku")
+        self.btn_open_video.setEnabled(False)
+        self.btn_open_folder.setEnabled(False)
+
+        # 8. Reset wizard navigation to Step 1
+        self.go_to_step(0)
+        self.update_stepper_and_rail()
+
+        self.log("Zresetowano parametry aplikacji do stanu początkowego.")
+
     def reset_new_project(self):
         reply = QMessageBox.question(
             self, "Nowy projekt", "Czy chcesz zresetować bieżący projekt i wczytać nowe wideo?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         if reply == QMessageBox.StandardButton.Yes:
-            if hasattr(self, 'source_player'):
-                self.source_player.pause()
-            if hasattr(self, 'fast_draft_widget'):
-                self.fast_draft_widget.reset()
-            if hasattr(self, 'preview_player'):
-                self.preview_player.pause()
-
-            self.input_file_a = ""
-            self.input_file_b = ""
-            self.output_file = ""
-            self.max_reached_step = 0
-            self.btn_step1_next.setEnabled(False)
-            self.btn_step3_next.setEnabled(False)
-            self.lbl_step1_hint.setText("Wybierz plik wideo, aby przejść do konfiguracji efektów.")
-            self.upload_content_stack.setCurrentIndex(0)
-            self.go_to_step(0)
+            self.reset_to_defaults()
 
 
 def main():

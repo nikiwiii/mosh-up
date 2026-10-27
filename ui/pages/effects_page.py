@@ -484,3 +484,29 @@ class EffectsPage(QWidget):
             self.fast_draft_widget.show_button()
             self.desc_rows[idx].addWidget(self.fast_draft_widget)
 
+    def reset_parameters(self):
+        """Resets all effect parameters and export configurations to default initial values."""
+        self.tabs.setCurrentIndex(0)
+        self.txt_ts_start.setText("00:00")
+        self.txt_ts_end.setText("00:30")
+        self.lbl_ts_validation.setText("Format: MM:SS (np. 00:05 lub 01:20)")
+        self.lbl_ts_validation.setStyleSheet(
+            "font-size: 11px; font-weight: 600; color: #64748b; background-color: #f1f5fa; "
+            "border: 1px solid #dce4ef; border-radius: 7px; padding: 3px 8px; margin-top: 1px;"
+        )
+        self.spin_s_repeat.setValue(15)
+        self.spin_s_freq.setValue(5)
+        self.lbl_file_b_path.setText("Nie wybrano drugiego pliku wideo")
+        self.slider_c_rate.setValue(8)
+        self.slider_c_intensity.setValue(3)
+        self.spin_fl_scale.setValue(2.5)
+        self.spin_fl_decay.setValue(0.85)
+        self.spin_rgb_delay.setValue(4)
+        self.spin_rgb_shift.setValue(8)
+        self.combo_rgb_direction.setCurrentIndex(0)
+        self.slider_rgb_jitter.setValue(10)
+        self.chk_keep_audio.setChecked(True)
+        self.lbl_out_path.setText("Automatyczna nazwa pliku wyjściowego")
+        self.fast_draft_widget.reset()
+
+
