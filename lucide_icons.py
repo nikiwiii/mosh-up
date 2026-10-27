@@ -48,12 +48,20 @@ LUCIDE_SVGS = {
 }
 
 
+_PIXMAP_CACHE = {}
+_ICON_CACHE = {}
+
+
 def get_lucide_svg(name: str, color: str = "#475569", stroke_width: float = 2.0) -> str:
     svg_template = LUCIDE_SVGS.get(name, LUCIDE_SVGS["sparkles"])
     return svg_template.format(color=color, stroke_width=stroke_width)
 
 
 def get_lucide_pixmap(name: str, color: str = "#475569", size: int = 24, stroke_width: float = 2.0) -> QPixmap:
+    key = (name, color, size, stroke_width)
+    if key in _PIXMAP_CACHE:
+        return _PIXMAP_CACHE[key]
+
     svg_str = get_lucide_svg(name, color=color, stroke_width=stroke_width)
     byte_array = QByteArray(svg_str.encode('utf-8'))
     renderer = QSvgRenderer(byte_array)
@@ -63,12 +71,22 @@ def get_lucide_pixmap(name: str, color: str = "#475569", size: int = 24, stroke_
 
     painter = QPainter()
     if painter.begin(pixmap):
+        painter.save()
         renderer.render(painter, QRectF(0, 0, size, size))
+        painter.restore()
         painter.end()
 
+    _PIXMAP_CACHE[key] = pixmap
     return pixmap
 
 
 def get_lucide_icon(name: str, color: str = "#475569", size: int = 24, stroke_width: float = 2.0) -> QIcon:
+    key = (name, color, size, stroke_width)
+    if key in _ICON_CACHE:
+        return _ICON_CACHE[key]
+
     pixmap = get_lucide_pixmap(name, color=color, size=size, stroke_width=stroke_width)
-    return QIcon(pixmap)
+    icon = QIcon(pixmap)
+    _ICON_CACHE[key] = icon
+    return icon
+

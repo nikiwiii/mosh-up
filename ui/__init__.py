@@ -1,6 +1,6 @@
 from .utils import apply_card_shadow, generate_random_filename
 from .worker import DatamoshWorker, FastDraftWorker
-from .widgets import DropAreaWidget, VideoPreviewWidget, NavigationRail, FastDraftDialog, FastDraftInlineWidget
+from .widgets import DropAreaWidget, VideoPreviewWidget, NavigationRail, FastDraftInlineWidget
 from .pages import UploadPage, EffectsPage, RenderPage, PreviewPage
 
 __all__ = [
@@ -11,7 +11,6 @@ __all__ = [
     'DropAreaWidget',
     'VideoPreviewWidget',
     'NavigationRail',
-    'FastDraftDialog',
     'FastDraftInlineWidget',
     'UploadPage',
     'EffectsPage',

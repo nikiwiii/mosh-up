@@ -25,7 +25,7 @@ from ui import (
     DropAreaWidget,
     VideoPreviewWidget,
     NavigationRail,
-    FastDraftDialog,
+    FastDraftInlineWidget,
     UploadPage,
     EffectsPage,
     RenderPage,
