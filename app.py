@@ -16,6 +16,7 @@ from datamosh_engine import (
     get_ffmpeg_exe,
     parse_timestamp,
     format_seconds_to_timestamp,
+    has_audio_stream,
 )
 from lucide_icons import get_lucide_icon
 from i18n import tr, get_language, set_language
@@ -346,7 +347,7 @@ class MoshUpApp(QMainWindow):
             else:
                 self.lbl_sum_param1.setText(f"Flow Scale: {self.spin_fl_scale.value():.1f} • Trail Decay: {self.spin_fl_decay.value():.2f}")
                 self.lbl_sum_param2.setText("Optical flow field drift and trail accumulation")
-        else:
+        elif tab_idx == 5:
             self.lbl_sum_mode_name.setText("RGB Channel Split" if get_language() == 'en' else "RGB Channel Split (Aberracja chromatyczna)")
             dir_text = self.combo_rgb_direction.currentText()
             if get_language() == 'pl':
@@ -355,6 +356,19 @@ class MoshUpApp(QMainWindow):
             else:
                 self.lbl_sum_param1.setText(f"Lag: {self.spin_rgb_delay.value()} fr. • Shift: {self.spin_rgb_shift.value()} px ({dir_text})")
                 self.lbl_sum_param2.setText(f"VHS Jitter: {self.slider_rgb_jitter.value()}% chance per frame")
+        else:
+            self.lbl_sum_mode_name.setText("Audio Reactive Moshing" if get_language() == 'en' else "Audio Reactive (Reakcja na dźwięk)")
+            rx_name = self.page_effects.combo_ar_reaction.currentText()
+            band_name = self.page_effects.combo_ar_band.currentText()
+            sens = self.page_effects.slider_ar_sensitivity.value()
+            inten = self.page_effects.slider_ar_intensity.value()
+            aud_src = os.path.basename(self.page_effects.custom_audio_path) if self.page_effects.custom_audio_path else ("Wideo" if get_language() == 'pl' else "Video Track")
+            if get_language() == 'pl':
+                self.lbl_sum_param1.setText(f"Reakcja: {rx_name} • Pasmo: {band_name}")
+                self.lbl_sum_param2.setText(f"Czułość: {sens}% • Siła glitch: {inten} • Źródło: {aud_src}")
+            else:
+                self.lbl_sum_param1.setText(f"Reaction: {rx_name} • Trigger: {band_name}")
+                self.lbl_sum_param2.setText(f"Sensitivity: {sens}% • Intensity: {inten} • Source: {aud_src}")
 
         # 3. Audio Tile
         if self.chk_keep_audio.isChecked():
@@ -363,9 +377,9 @@ class MoshUpApp(QMainWindow):
             self.lbl_sum_audio_status.setText(tr("tile_audio_off"))
 
         # 4. Output File Tile
-        mode_keys = ['volcano_melt', 'motion_smear', 'stitch_mosh', 'cyber_glitch', 'flow_drift', 'rgb_split']
+        mode_keys = ['volcano_melt', 'motion_smear', 'stitch_mosh', 'cyber_glitch', 'flow_drift', 'rgb_split', 'audio_reactive']
         if not self.output_file:
-            self.output_file = generate_random_filename(self.input_file_a, mode_keys[tab_idx])
+            self.output_file = generate_random_filename(self.input_file_a, mode_keys[min(tab_idx, len(mode_keys) - 1)])
 
         self.lbl_sum_output_file.setText(os.path.basename(self.output_file))
         dir_name = os.path.dirname(self.output_file) or "."
@@ -388,6 +402,7 @@ class MoshUpApp(QMainWindow):
             f"{tr('about_mode_cyber')}"
             f"{tr('about_mode_flow')}"
             f"{tr('about_mode_rgb')}"
+            f"{tr('about_mode_audio')}"
             f"</ul>"
         )
         QMessageBox.about(self, tr("about_title"), about_html)
@@ -531,7 +546,8 @@ class MoshUpApp(QMainWindow):
             2: 'stitch_mosh',
             3: 'cyber_glitch',
             4: 'flow_drift',
-            5: 'rgb_split'
+            5: 'rgb_split',
+            6: 'audio_reactive'
         }
         tab_idx = self.tabs.currentIndex()
         mode = mode_map.get(tab_idx, 'volcano_melt')
@@ -545,6 +561,14 @@ class MoshUpApp(QMainWindow):
         if mode == 'stitch_mosh':
             if not self.input_file_b or not os.path.exists(self.input_file_b):
                 QMessageBox.warning(self, tr("dialog_no_video_b_title"), tr("dialog_no_video_b_msg"))
+                self.go_to_step(1)
+                return
+
+        if mode == 'audio_reactive':
+            custom_aud = getattr(self.page_effects, 'custom_audio_path', '')
+            has_src_aud = has_audio_stream(get_ffmpeg_exe(), self.input_file_a)
+            if not custom_aud and not has_src_aud:
+                QMessageBox.warning(self, tr("dialog_no_audio_title"), tr("dialog_no_audio_msg"))
                 self.go_to_step(1)
                 return
 
@@ -569,7 +593,12 @@ class MoshUpApp(QMainWindow):
             'rgb_delay': self.spin_rgb_delay.value(),
             'rgb_shift': self.spin_rgb_shift.value(),
             'rgb_direction': self.combo_rgb_direction.currentData() or 'horizontal',
-            'rgb_jitter': self.slider_rgb_jitter.value()
+            'rgb_jitter': self.slider_rgb_jitter.value(),
+            'audio_reaction': self.page_effects.combo_ar_reaction.currentData() or 'smear',
+            'audio_band': self.page_effects.combo_ar_band.currentData() or 'bass',
+            'audio_sensitivity': self.page_effects.slider_ar_sensitivity.value(),
+            'audio_intensity': self.page_effects.slider_ar_intensity.value(),
+            'custom_audio_path': getattr(self.page_effects, 'custom_audio_path', ''),
         }
 
         self.btn_start.setEnabled(False)
@@ -631,7 +660,8 @@ class MoshUpApp(QMainWindow):
             2: 'stitch_mosh',
             3: 'cyber_glitch',
             4: 'flow_drift',
-            5: 'rgb_split'
+            5: 'rgb_split',
+            6: 'audio_reactive'
         }
         tab_idx = self.tabs.currentIndex()
         mode = mode_map.get(tab_idx, 'volcano_melt')
@@ -644,6 +674,13 @@ class MoshUpApp(QMainWindow):
         if mode == 'stitch_mosh':
             if not self.input_file_b or not os.path.exists(self.input_file_b):
                 QMessageBox.warning(self, tr("dialog_no_video_b_title"), tr("dialog_no_video_b_msg"))
+                return
+
+        if mode == 'audio_reactive':
+            custom_aud = getattr(self.page_effects, 'custom_audio_path', '')
+            has_src_aud = has_audio_stream(get_ffmpeg_exe(), self.input_file_a)
+            if not custom_aud and not has_src_aud:
+                QMessageBox.warning(self, tr("dialog_no_audio_title"), tr("dialog_no_audio_msg"))
                 return
 
         if mode == 'volcano_melt':
@@ -668,7 +705,12 @@ class MoshUpApp(QMainWindow):
             'rgb_delay': self.spin_rgb_delay.value(),
             'rgb_shift': self.spin_rgb_shift.value(),
             'rgb_direction': self.combo_rgb_direction.currentData() or 'horizontal',
-            'rgb_jitter': self.slider_rgb_jitter.value()
+            'rgb_jitter': self.slider_rgb_jitter.value(),
+            'audio_reaction': self.page_effects.combo_ar_reaction.currentData() or 'smear',
+            'audio_band': self.page_effects.combo_ar_band.currentData() or 'bass',
+            'audio_sensitivity': self.page_effects.slider_ar_sensitivity.value(),
+            'audio_intensity': self.page_effects.slider_ar_intensity.value(),
+            'custom_audio_path': getattr(self.page_effects, 'custom_audio_path', ''),
         }
 
         temp_dir = os.path.dirname(self.input_file_a) or "."

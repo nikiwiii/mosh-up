@@ -2,7 +2,8 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame, QTabWidget, QGroupBox, QLineEdit, QSpinBox,
-    QDoubleSpinBox, QSlider, QCheckBox, QComboBox, QScrollArea
+    QDoubleSpinBox, QSlider, QCheckBox, QComboBox, QScrollArea,
+    QFileDialog, QListView
 )
 from lucide_icons import get_lucide_icon, get_lucide_pixmap
 from ..widgets import VideoPreviewWidget, FastDraftInlineWidget
@@ -362,6 +363,7 @@ class EffectsPage(QWidget):
         self.rgb_dir_lbl.setStyleSheet("font-weight: 600; color: #475569;")
         self.rgb_dir_lbl.setFixedWidth(220)
         self.combo_rgb_direction = QComboBox(tab_rgb)
+        self.combo_rgb_direction.setView(QListView(self.combo_rgb_direction))
         self.combo_rgb_direction.addItem(tr("rgb_dir_horizontal"), "horizontal")
         self.combo_rgb_direction.addItem(tr("rgb_dir_diagonal"), "diagonal")
         self.combo_rgb_direction.addItem(tr("rgb_dir_vertical"), "vertical")
@@ -381,12 +383,126 @@ class EffectsPage(QWidget):
         tab_rgb_layout.addStretch(1)
         self.tabs.addTab(tab_rgb, get_lucide_icon("split", color="#475569"), tr("tab_rgb"))
 
+        # --- Tab 7: Audio Reactive ---
+        tab_audio = QWidget()
+        tab_ar_layout = QVBoxLayout(tab_audio)
+        tab_ar_layout.setContentsMargins(10, 8, 10, 6)
+        tab_ar_layout.setSpacing(6)
+
+        desc_ar_row = QHBoxLayout()
+        desc_ar_row.setContentsMargins(0, 0, 0, 2)
+        desc_ar_row.setSpacing(10)
+        desc_ar_row.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        self.lbl_ar_desc = QLabel(tr("desc_audio"), tab_audio)
+        self.lbl_ar_desc.setWordWrap(True)
+        self.lbl_ar_desc.setStyleSheet("color: #64748b; font-size: 12.5px; font-weight: 500;")
+        desc_ar_row.addWidget(self.lbl_ar_desc, 1)
+        tab_ar_layout.addLayout(desc_ar_row)
+
+        self.ar_box = QGroupBox(tr("group_audio_params"), tab_audio)
+        ar_box_layout = QVBoxLayout(self.ar_box)
+        ar_box_layout.setContentsMargins(12, 8, 12, 6)
+        ar_box_layout.setSpacing(6)
+
+        # Audio source row (video vs custom audio)
+        self.custom_audio_path = ""
+        ar_src_row = QHBoxLayout()
+        self.lbl_ar_source = QLabel(tr("lbl_audio_source"), tab_audio)
+        self.lbl_ar_source.setStyleSheet("font-weight: 600; color: #475569;")
+        self.lbl_ar_source.setFixedWidth(220)
+
+        self.btn_select_audio = QPushButton(tr("btn_choose_audio"), tab_audio)
+        self.btn_select_audio.setIcon(get_lucide_icon("music", color="#1e293b", size=14))
+        self.btn_select_audio.clicked.connect(self.browse_custom_audio)
+
+        self.lbl_custom_audio_path = QLabel(tr("lbl_no_custom_audio"), tab_audio)
+        self.lbl_custom_audio_path.setStyleSheet("""
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #64748b;
+            background-color: #f1f5fa;
+            border: 1px solid #dce4ef;
+            border-radius: 8px;
+            padding: 5px 10px;
+        """)
+
+        self.btn_clear_audio = QPushButton(tab_audio)
+        self.btn_clear_audio.setIcon(get_lucide_icon("x", color="#64748b", size=13))
+        self.btn_clear_audio.setFixedSize(28, 28)
+        self.btn_clear_audio.setToolTip("Reset to video audio")
+        self.btn_clear_audio.clicked.connect(self.clear_custom_audio)
+
+        ar_src_row.addWidget(self.lbl_ar_source)
+        ar_src_row.addWidget(self.btn_select_audio)
+        ar_src_row.addWidget(self.lbl_custom_audio_path, 1)
+        ar_src_row.addWidget(self.btn_clear_audio)
+        ar_box_layout.addLayout(ar_src_row)
+
+        # Reaction mode selection
+        ar_mode_row = QHBoxLayout()
+        self.lbl_ar_reaction = QLabel(tr("lbl_reaction_mode"), tab_audio)
+        self.lbl_ar_reaction.setStyleSheet("font-weight: 600; color: #475569;")
+        self.lbl_ar_reaction.setFixedWidth(220)
+        self.combo_ar_reaction = QComboBox(tab_audio)
+        self.combo_ar_reaction.setView(QListView(self.combo_ar_reaction))
+        self.combo_ar_reaction.addItem(tr("reaction_smear"), "smear")
+        self.combo_ar_reaction.addItem(tr("reaction_melt"), "melt")
+        self.combo_ar_reaction.addItem(tr("reaction_glitch"), "glitch")
+        self.combo_ar_reaction.addItem(tr("reaction_rgb"), "rgb")
+        self.combo_ar_reaction.addItem(tr("reaction_hybrid"), "hybrid")
+        ar_mode_row.addWidget(self.lbl_ar_reaction)
+        ar_mode_row.addWidget(self.combo_ar_reaction, 1)
+        ar_box_layout.addLayout(ar_mode_row)
+
+        # Trigger frequency band
+        ar_band_row = QHBoxLayout()
+        self.lbl_ar_band = QLabel(tr("lbl_audio_band"), tab_audio)
+        self.lbl_ar_band.setStyleSheet("font-weight: 600; color: #475569;")
+        self.lbl_ar_band.setFixedWidth(220)
+        self.combo_ar_band = QComboBox(tab_audio)
+        self.combo_ar_band.setView(QListView(self.combo_ar_band))
+        self.combo_ar_band.addItem(tr("band_bass"), "bass")
+        self.combo_ar_band.addItem(tr("band_rms"), "rms")
+        self.combo_ar_band.addItem(tr("band_high"), "high")
+        ar_band_row.addWidget(self.lbl_ar_band)
+        ar_band_row.addWidget(self.combo_ar_band, 1)
+        ar_box_layout.addLayout(ar_band_row)
+
+        # Sensitivity slider
+        self.lbl_ar_sensitivity = QLabel(f"{tr('lbl_audio_sensitivity')} 65%", tab_audio)
+        self.lbl_ar_sensitivity.setStyleSheet("font-weight: 600; color: #475569;")
+        ar_box_layout.addWidget(self.lbl_ar_sensitivity)
+        self.slider_ar_sensitivity = QSlider(Qt.Orientation.Horizontal, tab_audio)
+        self.slider_ar_sensitivity.setRange(10, 100)
+        self.slider_ar_sensitivity.setValue(65)
+        self.slider_ar_sensitivity.valueChanged.connect(
+            lambda v: self.lbl_ar_sensitivity.setText(f"{tr('lbl_audio_sensitivity')} {v}%")
+        )
+        ar_box_layout.addWidget(self.slider_ar_sensitivity)
+
+        # Glitch burst intensity slider
+        self.lbl_ar_intensity = QLabel(f"{tr('lbl_audio_intensity')} 12", tab_audio)
+        self.lbl_ar_intensity.setStyleSheet("font-weight: 600; color: #475569;")
+        ar_box_layout.addWidget(self.lbl_ar_intensity)
+        self.slider_ar_intensity = QSlider(Qt.Orientation.Horizontal, tab_audio)
+        self.slider_ar_intensity.setRange(1, 25)
+        self.slider_ar_intensity.setValue(12)
+        self.slider_ar_intensity.valueChanged.connect(
+            lambda v: self.lbl_ar_intensity.setText(f"{tr('lbl_audio_intensity')} {v}")
+        )
+        ar_box_layout.addWidget(self.slider_ar_intensity)
+
+        tab_ar_layout.addWidget(self.ar_box)
+        tab_ar_layout.addStretch(1)
+        self.tabs.addTab(tab_audio, get_lucide_icon("music", color="#475569"), tr("tab_audio"))
+
         tabs_card_layout.addWidget(self.tabs, 1)
         apply_card_shadow(tabs_card)
         sc_layout.addWidget(tabs_card)
 
         # Inline Fast Draft on Effect Description Level
-        self.desc_rows = [desc_v_row, desc_s_row, desc_st_row, desc_c_row, desc_fl_row, desc_rgb_row]
+        self.desc_rows = [desc_v_row, desc_s_row, desc_st_row, desc_c_row, desc_fl_row, desc_rgb_row, desc_ar_row]
         self.fast_draft_widget = FastDraftInlineWidget(self)
         self.desc_rows[0].addWidget(self.fast_draft_widget)
         self.tabs.currentChanged.connect(self._on_tab_changed)
@@ -518,6 +634,33 @@ class EffectsPage(QWidget):
         self.combo_rgb_direction.setCurrentIndex(cur_dir_idx)
         self.rgb_jitter_lbl.setText(tr("lbl_rgb_jitter"))
 
+        # Tab 7: Audio Reactive
+        self.tabs.setTabText(6, tr("tab_audio"))
+        self.lbl_ar_desc.setText(tr("desc_audio"))
+        self.ar_box.setTitle(tr("group_audio_params"))
+        self.lbl_ar_source.setText(tr("lbl_audio_source"))
+        self.btn_select_audio.setText(tr("btn_choose_audio"))
+        if not self.custom_audio_path:
+            self.lbl_custom_audio_path.setText(tr("lbl_no_custom_audio"))
+        self.lbl_ar_reaction.setText(tr("lbl_reaction_mode"))
+        cur_rx_idx = self.combo_ar_reaction.currentIndex()
+        self.combo_ar_reaction.setItemText(0, tr("reaction_smear"))
+        self.combo_ar_reaction.setItemText(1, tr("reaction_melt"))
+        self.combo_ar_reaction.setItemText(2, tr("reaction_glitch"))
+        self.combo_ar_reaction.setItemText(3, tr("reaction_rgb"))
+        self.combo_ar_reaction.setItemText(4, tr("reaction_hybrid"))
+        self.combo_ar_reaction.setCurrentIndex(cur_rx_idx)
+
+        self.lbl_ar_band.setText(tr("lbl_audio_band"))
+        cur_band_idx = self.combo_ar_band.currentIndex()
+        self.combo_ar_band.setItemText(0, tr("band_bass"))
+        self.combo_ar_band.setItemText(1, tr("band_rms"))
+        self.combo_ar_band.setItemText(2, tr("band_high"))
+        self.combo_ar_band.setCurrentIndex(cur_band_idx)
+
+        self.lbl_ar_sensitivity.setText(f"{tr('lbl_audio_sensitivity')} {self.slider_ar_sensitivity.value()}%")
+        self.lbl_ar_intensity.setText(f"{tr('lbl_audio_intensity')} {self.slider_ar_intensity.value()}")
+
         # Fast draft
         self.fast_draft_widget.retranslate_ui()
 
@@ -529,6 +672,19 @@ class EffectsPage(QWidget):
         # Nav
         self.btn_step2_back.setText(tr("btn_step2_back"))
         self.btn_step2_next.setText(tr("btn_step2_next"))
+
+    def browse_custom_audio(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, tr("file_dialog_select_audio"), "", tr("file_dialog_audio_filter")
+        )
+        if file_path:
+            self.custom_audio_path = file_path
+            import os
+            self.lbl_custom_audio_path.setText(os.path.basename(file_path))
+
+    def clear_custom_audio(self):
+        self.custom_audio_path = ""
+        self.lbl_custom_audio_path.setText(tr("lbl_no_custom_audio"))
 
     def _on_tab_changed(self, idx):
         if 0 <= idx < len(self.desc_rows):
@@ -557,6 +713,15 @@ class EffectsPage(QWidget):
         self.spin_rgb_shift.setValue(8)
         self.combo_rgb_direction.setCurrentIndex(0)
         self.slider_rgb_jitter.setValue(10)
+
+        # Reset Tab 7 (Audio Reactive)
+        self.clear_custom_audio()
+        self.combo_ar_reaction.setCurrentIndex(0)
+        self.combo_ar_band.setCurrentIndex(0)
+        self.slider_ar_sensitivity.setValue(65)
+        self.slider_ar_intensity.setValue(12)
+
         self.chk_keep_audio.setChecked(True)
         self.lbl_out_path.setText(tr("lbl_auto_out"))
         self.fast_draft_widget.reset()
+

@@ -105,6 +105,21 @@ class FastDraftWorker(QThread):
                 draft_options['end_sec'] = 3.0
                 draft_options['video_duration'] = 3.0
 
+            elif self.mode == 'audio_reactive':
+                custom_aud = draft_options.get('custom_audio_path')
+                if custom_aud and os.path.exists(custom_aud):
+                    temp_cut_aud = os.path.join(temp_dir, "_temp_draft_cut_audio.wav")
+                    cmd_cut_aud = [
+                        self.ffmpeg, "-y",
+                        "-ss", f"{self.t_start:.2f}",
+                        "-i", custom_aud,
+                        "-t", "3.0",
+                        temp_cut_aud
+                    ]
+                    proc_aud = subprocess.run(cmd_cut_aud, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    if proc_aud.returncode == 0 and os.path.exists(temp_cut_aud):
+                        draft_options['custom_audio_path'] = temp_cut_aud
+
             def cb(pct, msg):
                 mapped_pct = 20 + int(pct * 0.75)
                 self.progress_signal.emit(mapped_pct, f"Fast Draft: {msg}")
@@ -115,4 +130,4 @@ class FastDraftWorker(QThread):
         except Exception as e:
             self.error_signal.emit(str(e))
         finally:
-            cleanup_temp_files(temp_cut_a, temp_cut_b)
+            cleanup_temp_files(temp_cut_a, temp_cut_b, os.path.join(temp_dir, "_temp_draft_cut_audio.wav"))

@@ -2,7 +2,19 @@ import os
 import subprocess
 
 
-def convert_to_avi_mpeg4(ffmpeg_path, input_path, temp_avi, progress_callback=None, target_res=None):
+def has_audio_stream(ffmpeg_path, file_path):
+    """Checks whether a media file contains a playable audio stream."""
+    if not file_path or not os.path.exists(file_path):
+        return False
+    cmd = [
+        ffmpeg_path, "-i", file_path,
+        "-vn", "-t", "0.1", "-f", "null", "-"
+    ]
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return proc.returncode == 0
+
+
+def convert_to_avi_mpeg4(ffmpeg_path, input_path, temp_avi, progress_callback=None, target_res=None, gop_size=60):
     """
     Converts input video to raw MPEG-4 AVI container with Xvid fourcc,
     fixed keyframe interval and no B-frames (essential for datamoshing).
@@ -26,7 +38,7 @@ def convert_to_avi_mpeg4(ffmpeg_path, input_path, temp_avi, progress_callback=No
         "-c:v", "mpeg4",
         "-vtag", "xvid",
         "-q:v", "3",
-        "-g", "60",
+        "-g", str(gop_size),
         "-bf", "0",
         "-c:a", "mp3",
         temp_avi

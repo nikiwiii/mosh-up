@@ -9,6 +9,7 @@ from .effects import (
     mosh_cyber_glitch,
     mosh_flow_drift,
     mosh_rgb_split,
+    mosh_audio_reactive,
 )
 
 
@@ -23,7 +24,7 @@ class DatamoshEngine:
     def process(self, mode, input_path, output_path, options=None, progress_callback=None):
         """
         Processes video using specified datamosh mode.
-        Supported modes: 'volcano_melt', 'motion_smear', 'stitch_mosh', 'cyber_glitch', 'flow_drift', 'rgb_split'
+        Supported modes: 'volcano_melt', 'motion_smear', 'stitch_mosh', 'cyber_glitch', 'flow_drift', 'rgb_split', 'audio_reactive'
         """
         options = options or {}
         if progress_callback:
@@ -44,6 +45,8 @@ class DatamoshEngine:
             return self.mosh_flow_drift(input_path, output_path, options, progress_callback)
         elif mode == 'rgb_split':
             return self.mosh_rgb_split(input_path, output_path, options, progress_callback)
+        elif mode == 'audio_reactive':
+            return self.mosh_audio_reactive(input_path, output_path, options, progress_callback)
         else:
             raise ValueError(f"Unknown datamosh mode: {mode}")
 
@@ -70,4 +73,7 @@ class DatamoshEngine:
 
     def mosh_rgb_split(self, input_path, output_path, options, progress_callback=None):
         return mosh_rgb_split(self.ffmpeg, input_path, output_path, options, progress_callback)
+
+    def mosh_audio_reactive(self, input_path, output_path, options, progress_callback=None):
+        return mosh_audio_reactive(self.ffmpeg, input_path, output_path, options, progress_callback)
 

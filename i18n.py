@@ -17,6 +17,7 @@ TRANSLATIONS = {
         'about_mode_cyber': '<li><b>Cyber Glitch</b>: Corrupts delta frame motion bits directly</li>',
         'about_mode_flow': '<li><b>Flow Drift</b>: Organic pixel drift calculated using Farneback optical flow</li>',
         'about_mode_rgb': '<li><b>RGB Channel Split</b>: Splits color channels (R, G, B) with temporal delay and spatial shift</li>',
+        'about_mode_audio': '<li><b>Audio Reactive</b>: Syncs datamosh vector smears, keyframe drops, and chromatic shocks directly to music beats and audio frequencies</li>',
 
         # Navigation Rail
         'nav_step_1': '1. Upload Video',
@@ -63,6 +64,7 @@ TRANSLATIONS = {
         'tab_cyber': 'Cyber Glitch',
         'tab_flow': 'Flow Drift',
         'tab_rgb': 'RGB Split',
+        'tab_audio': 'Audio Reactive',
 
         # Mode Descriptions
         'desc_volcano': 'Removes keyframes (I-Frames) in the specified time range. Motion vectors deform the previous static picture, melting objects seamlessly.',
@@ -71,6 +73,7 @@ TRANSLATIONS = {
         'desc_cyber': 'Injects random byte corruptions directly into P-Frame motion vectors, generating digital cyberpunk glitch-art artifacts.',
         'desc_flow': 'Calculates optical flow vectors between frames and drifts accumulated screen pixels organically.',
         'desc_rgb': 'Splits color components (Red, Green, Blue) with temporal lag and spatial offset, creating analog VHS chromatic aberration.',
+        'desc_audio': 'Analyzes audio beats, basslines, and frequency energy to trigger vector smears, keyframe drops, or digital glitches in sync with the rhythm.',
 
         # Mode Parameters
         'group_time_window': 'Effect Time Window',
@@ -107,6 +110,25 @@ TRANSLATIONS = {
         'rgb_dir_diagonal': 'Diagonal',
         'rgb_dir_vertical': 'Vertical',
         'lbl_rgb_jitter': 'VHS Scanline Jitter (%):',
+
+        'group_audio_params': 'Audio-Reactive Datamosh Settings',
+        'lbl_audio_source': 'Audio Track Source:',
+        'audio_src_video': 'Source Video Audio Track',
+        'audio_src_custom': 'Custom External Audio File (MP3 / WAV / AAC)',
+        'btn_choose_audio': '  Choose Audio File...',
+        'lbl_no_custom_audio': 'Using audio from video',
+        'lbl_reaction_mode': 'Reaction Mode:',
+        'reaction_smear': 'Beat Motion Smear (Vector Stretch on Bass)',
+        'reaction_melt': 'Beat Drop Melt (Drop Keyframes on Beats)',
+        'reaction_glitch': 'Cyber Glitch Rhythm (Bit Corruption on Beats)',
+        'reaction_rgb': 'Chromatic Beat Pulse (Aberration Shockwave)',
+        'reaction_hybrid': 'Full Audio Chaos (Smear + Glitch Burst)',
+        'lbl_audio_band': 'Frequency Trigger Band:',
+        'band_bass': 'Bass / Kick Drums (20 - 180 Hz)',
+        'band_rms': 'Full Volume / Transients & Peaks',
+        'band_high': 'Snare / High Frequencies (2 - 10 kHz)',
+        'lbl_audio_sensitivity': 'Beat Sensitivity / Threshold:',
+        'lbl_audio_intensity': 'Glitch Burst Intensity:',
 
         # Fast Draft inline
         'btn_fast_draft': '  3s Preview',
@@ -183,9 +205,13 @@ TRANSLATIONS = {
         'dialog_draft_error_msg': 'Failed to generate 3-second preview:\n\n{err}',
         'dialog_render_error_title': 'Processing Error',
         'dialog_render_error_msg': 'An error occurred during the datamosh process:\n\n{err}',
+        'dialog_no_audio_title': 'No Audio Track Found',
+        'dialog_no_audio_msg': 'The video has no audio stream and no custom audio file was selected. Please choose an audio file or select a video with sound!',
 
         'file_dialog_select_a': 'Select Video File A',
         'file_dialog_select_b': 'Select Video File B',
+        'file_dialog_select_audio': 'Select External Audio File',
+        'file_dialog_audio_filter': 'Audio Files (*.mp3 *.wav *.aac *.m4a *.flac *.ogg);;All Files (*.*)',
         'file_dialog_save_output': 'Save Datamosh Output Video',
         'file_dialog_video_filter': 'Video files (*.mp4 *.avi *.mov *.mkv *.webm);;All files (*.*)',
         'file_dialog_save_filter': 'MP4 Video (*.mp4);;AVI Video (*.avi)',
@@ -212,6 +238,7 @@ TRANSLATIONS = {
         'about_mode_cyber': '<li><b>Cyber Glitch</b>: Bezpośrednie uszkadzanie bitów wektorów ruchu</li>',
         'about_mode_flow': '<li><b>Flow Drift</b>: Organiczny dryf pikseli obliczany metodą przepływu optycznego</li>',
         'about_mode_rgb': '<li><b>RGB Channel Split</b>: Rozszczepianie kanałów barwnych (Red, Green, Blue) z opóźnieniem czasowym i przesunięciem przestrzennym</li>',
+        'about_mode_audio': '<li><b>Audio Reactive</b>: Synchronizuje impulsy zniekształceń, smugi wektorów i aberrację chromatyczną z rytmem i basem muzyki</li>',
 
         # Navigation Rail
         'nav_step_1': '1. Wczytaj wideo',
@@ -258,6 +285,7 @@ TRANSLATIONS = {
         'tab_cyber': 'Cyber Glitch',
         'tab_flow': 'Flow Drift',
         'tab_rgb': 'RGB Split',
+        'tab_audio': 'Audio Reactive',
 
         # Mode Descriptions
         'desc_volcano': 'Usuwa klatki kluczowe (I-Frames) w zadanym oknie czasowym. Wektory ruchu deformatują poprzedni statyczny obraz, tworząc płynne topnienie obiektów.',
@@ -266,6 +294,7 @@ TRANSLATIONS = {
         'desc_cyber': 'Wstrzykuje losowe uszkodzenia bajtów bezpośrednio do wektorów klatek różnicowych (P-Frames), generując cyfrowe zakłócenia w stylu glitch-art.',
         'desc_flow': 'Oblicza wektory przepływu optycznego pomiędzy klatkami i deformuje zakumulowane piksele na ekranie w organiczny, płynny sposób.',
         'desc_rgb': 'Rozszczepia składowe barwne (czerwony, zielony, niebieski) z opóźnieniem czasowym i przesunięciem przestrzennym, tworząc hipnotyzujące tęczowe smugi ruchu oraz analogowy efekt aberracji chromatycznej VHS.',
+        'desc_audio': 'Analizuje pasma częstotliwości i uderzenia w ścieżce dźwiękowej, wyzwalając rozmazywanie wektorów, usuwanie klatek kluczowych lub zniekształcenia bitów dokładnie w rytm muzyki.',
 
         # Mode Parameters
         'group_time_window': 'Przedział czasowy efektu',
@@ -302,6 +331,25 @@ TRANSLATIONS = {
         'rgb_dir_diagonal': 'Ukośny (Diagonal)',
         'rgb_dir_vertical': 'Pionowy (Vertical)',
         'lbl_rgb_jitter': 'Zakłócenia linii VHS (Jitter %):',
+
+        'group_audio_params': 'Ustawienia reakcji na dźwięk',
+        'lbl_audio_source': 'Źródło ścieżki audio:',
+        'audio_src_video': 'Ścieżka dźwiękowa z pliku wideo',
+        'audio_src_custom': 'Własny plik audio (MP3 / WAV / AAC)',
+        'btn_choose_audio': '  Wybierz plik audio...',
+        'lbl_no_custom_audio': 'Używany dźwięk z wideo',
+        'lbl_reaction_mode': 'Tryb reakcji:',
+        'reaction_smear': 'Beat Motion Smear (Rozciąganie wektorów na basie)',
+        'reaction_melt': 'Beat Drop Melt (Usuwanie klatek na uderzeniach)',
+        'reaction_glitch': 'Cyber Glitch Rhythm (Rytmiczne zniekształcenia bitów)',
+        'reaction_rgb': 'Chromatic Beat Pulse (Aberracja chromatyczna i wstrząs)',
+        'reaction_hybrid': 'Full Audio Chaos (Maksymalny mosh: Smear + Glitch)',
+        'lbl_audio_band': 'Pasmo wyzwalania:',
+        'band_bass': 'Basy / Stopa perkusji (20 - 180 Hz)',
+        'band_rms': 'Pełna głośność / Skoki amplitudy',
+        'band_high': 'Werbel / Tony wysokie (2 - 10 kHz)',
+        'lbl_audio_sensitivity': 'Czułość detekcji uderzeń:',
+        'lbl_audio_intensity': 'Intensywność impulsu glitch:',
 
         # Fast Draft inline
         'btn_fast_draft': '  Podgląd 3s',
@@ -378,9 +426,13 @@ TRANSLATIONS = {
         'dialog_draft_error_msg': 'Nie udało się wygenerować wycinka:\n\n{err}',
         'dialog_render_error_title': 'Błąd przetwarzania',
         'dialog_render_error_msg': 'Wystąpił błąd podczas procesu datamosh:\n\n{err}',
+        'dialog_no_audio_title': 'Brak ścieżki dźwiękowej',
+        'dialog_no_audio_msg': 'Wideo nie posiada dźwięku i nie wybrano własnego pliku audio. Wybierz plik dźwiękowy lub użyj wideo z dźwiękiem!',
 
         'file_dialog_select_a': 'Wybierz plik wideo A',
         'file_dialog_select_b': 'Wybierz plik wideo B',
+        'file_dialog_select_audio': 'Wybierz zewnętrzny plik audio',
+        'file_dialog_audio_filter': 'Pliki audio (*.mp3 *.wav *.aac *.m4a *.flac *.ogg);;Wszystkie pliki (*.*)',
         'file_dialog_save_output': 'Zapisz wyjściowy film Datamosh',
         'file_dialog_video_filter': 'Pliki wideo (*.mp4 *.avi *.mov *.mkv *.webm);;Wszystkie pliki (*.*)',
         'file_dialog_save_filter': 'MP4 Video (*.mp4);;AVI Video (*.avi)',

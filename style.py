@@ -278,15 +278,40 @@ QComboBox::down-arrow {
     height: 12px;
 }
 
-QComboBox QAbstractItemView {
+QComboBox QAbstractItemView,
+QComboBox QListView {
     background-color: #ffffff;
-    color: #1e293b;
+    background: #ffffff;
+    color: #0f172a;
     font-weight: 600;
     selection-background-color: #151829;
     selection-color: #ffffff;
-    border: 1px solid #d8e2ed;
+    border: 1px solid #cbd5e1;
     border-radius: 10px;
     padding: 4px;
+    outline: none;
+}
+
+QComboBox QAbstractItemView::item,
+QComboBox QListView::item {
+    min-height: 28px;
+    padding: 5px 10px;
+    background-color: #ffffff;
+    color: #0f172a;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+QComboBox QAbstractItemView::item:hover,
+QComboBox QListView::item:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+QComboBox QAbstractItemView::item:selected,
+QComboBox QListView::item:selected {
+    background-color: #151829;
+    color: #ffffff;
 }
 
 /* Tactile Slider */

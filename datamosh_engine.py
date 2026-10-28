@@ -11,6 +11,7 @@ from engine import (
     cleanup_temp_files,
     convert_to_avi_mpeg4,
     recombine_with_original_audio,
+    has_audio_stream,
     find_video_frames,
     find_vop,
     is_iframe,
@@ -22,6 +23,7 @@ from engine import (
     VOP_TYPE_B,
     VOP_TYPE_S,
     mosh_rgb_split,
+    mosh_audio_reactive,
 )
 
 __all__ = [
@@ -32,6 +34,7 @@ __all__ = [
     'cleanup_temp_files',
     'convert_to_avi_mpeg4',
     'recombine_with_original_audio',
+    'has_audio_stream',
     'find_video_frames',
     'find_vop',
     'is_iframe',
@@ -43,4 +46,5 @@ __all__ = [
     'VOP_TYPE_B',
     'VOP_TYPE_S',
     'mosh_rgb_split',
+    'mosh_audio_reactive',
 ]

@@ -4,6 +4,7 @@ from .stitch_mosh import mosh_stitch
 from .cyber_glitch import mosh_cyber_glitch
 from .flow_drift import mosh_flow_drift
 from .rgb_split import mosh_rgb_split
+from .audio_reactive import mosh_audio_reactive
 
 __all__ = [
     'mosh_volcano_melt',
@@ -12,5 +13,6 @@ __all__ = [
     'mosh_cyber_glitch',
     'mosh_flow_drift',
     'mosh_rgb_split',
+    'mosh_audio_reactive',
 ]
 
